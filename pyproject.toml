@@ -1,0 +1,249 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "enhanced-url-summarizer"
+version = "1.0.0"
+description = "A comprehensive command-line tool that summarizes URLs using LLM fragments with advanced features"
+authors = [
+    {name = "Enhanced URL Summarizer", email = "contact@example.com"},
+]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+keywords = ["llm", "summarization", "cli", "url", "ai", "fragments", "reddit", "youtube", "hacker-news"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Text Processing :: Linguistic",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Utilities",
+    "Environment :: Console",
+]
+
+# Core dependencies - managed by uv
+dependencies = [
+    "llm>=0.13.0",
+    "llm-fragments-reddit>=0.1.0",
+    "llm-hacker-news>=0.1.0", 
+    "llm-fragments-youtube>=0.1.0",
+]
+
+[project.optional-dependencies]
+# Development dependencies
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "black>=23.7.0",
+    "ruff>=0.0.285",
+    "mypy>=1.5.0",
+    "pre-commit>=3.3.0",
+    "types-requests>=2.31.0",
+]
+
+# Testing dependencies
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "responses>=0.23.0",
+]
+
+# Documentation dependencies  
+docs = [
+    "mkdocs>=1.5.0",
+    "mkdocs-material>=9.1.0",
+    "mkdocstrings[python]>=0.22.0",
+]
+
+# Performance profiling
+profile = [
+    "py-spy>=0.3.14",
+    "memory-profiler>=0.61.0",
+]
+
+# All optional dependencies
+all = [
+    "enhanced-url-summarizer[dev,test,docs,profile]"
+]
+
+[project.scripts]
+# Multiple entry points for flexibility
+url-summarizer = "enhanced_url_summarizer:main"
+summarize-url = "enhanced_url_summarizer:main"
+llm-summarizer = "enhanced_url_summarizer:main"
+esum = "enhanced_url_summarizer:main"
+
+[project.urls]
+Homepage = "https://github.com/yourusername/enhanced-url-summarizer"
+Repository = "https://github.com/yourusername/enhanced-url-summarizer"
+Issues = "https://github.com/yourusername/enhanced-url-summarizer/issues"
+Documentation = "https://github.com/yourusername/enhanced-url-summarizer/blob/main/README.md"
+Changelog = "https://github.com/yourusername/enhanced-url-summarizer/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["enhanced_url_summarizer.py"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | \.pytest_cache
+  | build
+  | dist
+)/
+'''
+
+# Ruff configuration (replaces flake8, isort, and more)
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+    "N",  # pep8-naming
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]
+
+[tool.ruff.isort]
+known-first-party = ["enhanced_url_summarizer"]
+
+# MyPy configuration
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+show_error_codes = true
+
+[[tool.mypy.overrides]]
+module = [
+    "llm.*",
+    "llm_fragments_reddit.*",
+    "llm_hacker_news.*", 
+    "llm_fragments_youtube.*",
+]
+ignore_missing_imports = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--cov=enhanced_url_summarizer",
+    "--cov-report=html",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["enhanced_url_summarizer"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError", 
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "# pragma: no cover",
+    "# type: ignore",
+]
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+# UV-specific configuration for dependency management
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "black>=23.7.0",
+    "ruff>=0.0.285",
+    "mypy>=1.5.0",
+    "pre-commit>=3.3.0",
+    "types-requests>=2.31.0",
+]
+
+# Dependency groups for uv
+[dependency-groups]
+test = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "responses>=0.23.0",
+]
+lint = [
+    "black>=23.7.0",
+    "ruff>=0.0.285",
+    "mypy>=1.5.0",
+]
+dev = [
+    "enhanced-url-summarizer[test,lint]",
+    "pre-commit>=3.3.0",
+]
