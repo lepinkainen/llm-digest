@@ -15,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from database import DatabaseManager
-from services import SummaryConfig, URLProcessor
+from services import LLMModelDiscovery, SummaryConfig, URLProcessor
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -27,6 +27,7 @@ app = FastAPI(
 # Initialize services
 db = DatabaseManager()
 url_processor = URLProcessor()
+model_discovery = LLMModelDiscovery()
 
 # Setup templates and static files
 templates_dir = Path("templates")
@@ -93,13 +94,13 @@ async def submit_url(
 
         if summary_record:
             summary_record.url_id = url_id
-            summary_id = db.insert_summary(summary_record)
+            db.insert_summary(summary_record)
 
         # Redirect to results page
         return RedirectResponse(url=f"/results/{url_id}", status_code=303)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}") from e
 
 
 @app.get("/results/{url_id}", response_class=HTMLResponse)
@@ -172,6 +173,68 @@ async def search_summaries_api(q: str = Query(...), limit: int = Query(50, le=10
     return db.search_summaries(q, limit)
 
 
+@app.get("/api/models")
+async def get_models():
+    """API endpoint for available LLM models."""
+    try:
+        models = model_discovery.get_recommended_models()
+        return {
+            "models": [
+                {
+                    "name": model.name,
+                    "provider": model.provider,
+                    "aliases": model.aliases,
+                    "display_name": model.aliases[0] if model.aliases else model.name
+                }
+                for model in models
+            ]
+        }
+    except Exception:
+        # Return fallback models if discovery fails
+        return {
+            "models": [
+                {"name": "gpt-4o", "provider": "OpenAI Chat", "aliases": ["4o"], "display_name": "4o"},
+                {"name": "gpt-4o-mini", "provider": "OpenAI Chat", "aliases": ["4o-mini"], "display_name": "4o-mini"},
+                {"name": "gpt-4", "provider": "OpenAI Chat", "aliases": ["4", "gpt4"], "display_name": "4"},
+                {"name": "gpt-3.5-turbo", "provider": "OpenAI Chat", "aliases": ["3.5", "chatgpt"], "display_name": "3.5"},
+            ]
+        }
+
+
+@app.get("/api/models/categories")
+async def get_models_by_category():
+    """API endpoint for categorized LLM models."""
+    try:
+        categories = model_discovery.get_models_by_category()
+        result = {}
+
+        for category, models in categories.items():
+            result[category] = [
+                {
+                    "name": model.name,
+                    "provider": model.provider,
+                    "aliases": model.aliases,
+                    "display_name": model.aliases[0] if model.aliases else model.name
+                }
+                for model in models
+            ]
+
+        return result
+    except Exception:
+        # Return fallback categorized models
+        return {
+            "recommended": [
+                {"name": "gpt-4o", "provider": "OpenAI Chat", "aliases": ["4o"], "display_name": "4o"},
+                {"name": "gpt-4", "provider": "OpenAI Chat", "aliases": ["4"], "display_name": "4"},
+            ],
+            "budget": [
+                {"name": "gpt-4o-mini", "provider": "OpenAI Chat", "aliases": ["4o-mini"], "display_name": "4o-mini"},
+                {"name": "gpt-3.5-turbo", "provider": "OpenAI Chat", "aliases": ["3.5"], "display_name": "3.5"},
+            ],
+            "alternative": []
+        }
+
+
 @app.get("/datasette")
 async def datasette_redirect():
     """Redirect to Datasette instance."""
@@ -184,7 +247,7 @@ def _is_valid_url(url: str) -> bool:
     try:
         result = urllib.parse.urlparse(url)
         return all([result.scheme, result.netloc])
-    except:
+    except Exception:
         return False
 
 

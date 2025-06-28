@@ -38,9 +38,7 @@
                 <div class="form-group">
                     <label for="model">LLM Model:</label>
                     <select id="model" name="model" class="form-select">
-                        <option value="gpt-4" selected>GPT-4</option>
-                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                        <option value="gpt-4o" selected>Loading models...</option>
                     </select>
                 </div>
                 
@@ -114,4 +112,46 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadModels();
+});
+
+function loadModels() {
+    const modelSelect = document.getElementById('model');
+    
+    fetch('/api/models')
+        .then(response => response.json())
+        .then(data => {
+            // Clear loading message
+            modelSelect.innerHTML = '';
+            
+            // Add models to dropdown
+            data.models.forEach((model, index) => {
+                const option = document.createElement('option');
+                option.value = model.name;
+                option.textContent = `${model.display_name} (${model.provider})`;
+                
+                // Select first model as default
+                if (index === 0) {
+                    option.selected = true;
+                }
+                
+                modelSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Failed to load models:', error);
+            
+            // Fallback to hardcoded models
+            modelSelect.innerHTML = `
+                <option value="gpt-4o" selected>4o (OpenAI Chat)</option>
+                <option value="gpt-4o-mini">4o-mini (OpenAI Chat)</option>
+                <option value="gpt-4">4 (OpenAI Chat)</option>
+                <option value="gpt-3.5-turbo">3.5 (OpenAI Chat)</option>
+            `;
+        });
+}
+</script>
 {% endblock %}

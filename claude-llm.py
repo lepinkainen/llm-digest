@@ -19,7 +19,14 @@ import subprocess
 import sys
 import urllib.parse
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from typing import Optional
+
+# Import model discovery if available (for validation)
+try:
+    from services import LLMModelDiscovery
+    MODEL_DISCOVERY_AVAILABLE = True
+except ImportError:
+    MODEL_DISCOVERY_AVAILABLE = False
 
 
 @dataclass
@@ -39,6 +46,14 @@ class URLSummarizer:
     def __init__(self, config: Optional[SummaryConfig] = None):
         """Initialize the URL summarizer with configuration."""
         self.config = config or SummaryConfig()
+
+        # Initialize model discovery if available
+        self.model_discovery = None
+        if MODEL_DISCOVERY_AVAILABLE:
+            try:
+                self.model_discovery = LLMModelDiscovery()
+            except Exception:
+                pass
 
         # Combined fragment mappings from all implementations
         self.fragment_mappings = {
@@ -95,8 +110,23 @@ class URLSummarizer:
         try:
             result = urllib.parse.urlparse(url)
             return all([result.scheme, result.netloc])
-        except:
+        except Exception:
             return False
+
+    def validate_model(self, model_name: str) -> tuple[bool, Optional[str]]:
+        """
+        Validate if a model is available and provide suggestions if not.
+        Returns (is_valid, suggestion_message).
+        """
+        if not self.model_discovery:
+            # If model discovery is not available, assume model is valid
+            return True, None
+
+        try:
+            return self.model_discovery.validate_model(model_name)
+        except Exception:
+            # If validation fails, assume model is valid to avoid blocking
+            return True, None
 
     def extract_youtube_id(self, url: str) -> Optional[str]:
         """Extract YouTube video ID using multiple methods."""
@@ -129,7 +159,7 @@ class URLSummarizer:
             elif parsed.netloc == "youtu.be":
                 if parsed.path.startswith("/"):
                     return parsed.path[1:]
-        except:
+        except Exception:
             pass
 
         return None
@@ -155,7 +185,7 @@ class URLSummarizer:
                 post_id = path_parts[4]
                 self._log_debug(f"Extracted Reddit ID via path parsing: {post_id}")
                 return post_id
-        except:
+        except Exception:
             pass
 
         return None
@@ -177,12 +207,12 @@ class URLSummarizer:
                 item_id = query["id"][0]
                 self._log_debug(f"Extracted HN ID via query parsing: {item_id}")
                 return item_id
-        except:
+        except Exception:
             pass
 
         return None
 
-    def detect_url_type(self, url: str) -> Optional[Tuple[str, str]]:
+    def detect_url_type(self, url: str) -> Optional[tuple[str, str]]:
         """
         Detect URL type and return fragment name and identifier.
         Returns tuple of (fragment_name, fragment_identifier) or None.
@@ -427,6 +457,13 @@ Examples:
     args = parser.parse_args()
     config = create_config_from_args(args)
     summarizer = URLSummarizer(config)
+
+    # Validate model before proceeding
+    is_valid, suggestion_msg = summarizer.validate_model(config.model)
+    if not is_valid and suggestion_msg:
+        print(f"⚠️  {suggestion_msg}")
+        print("   💡 Continuing anyway, but this may fail during execution.")
+        print()
 
     if args.url:
         # Single URL mode
