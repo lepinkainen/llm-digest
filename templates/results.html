@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Results - {{ url_record.title or url_record.url }} - LLM Digest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="results-header">
+        <h1>📄 Summary Results</h1>
+        <a href="/" class="back-link">← Back to Home</a>
+    </div>
+
+    <div class="url-info">
+        <div class="url-card">
+            <div class="url-header">
+                <h2>{{ url_record.title or "No Title" }}</h2>
+                <div class="url-meta">
+                    {% if url_record.site_name %}
+                    <span class="site-name">{{ url_record.site_name }}</span>
+                    {% endif %}
+                    <span class="timestamp">{{ url_record.created_at }}</span>
+                </div>
+            </div>
+            
+            <div class="url-content">
+                <div class="url-link">
+                    <strong>URL:</strong>
+                    <a href="{{ url_record.url }}" target="_blank" class="external-link">
+                        {{ url_record.url }}
+                    </a>
+                </div>
+                
+                {% if url_record.description %}
+                <div class="url-description">
+                    <strong>Description:</strong>
+                    <p>{{ url_record.description }}</p>
+                </div>
+                {% endif %}
+                
+                {% if url_record.image %}
+                <div class="url-image">
+                    <strong>Preview Image:</strong>
+                    <img src="{{ url_record.image }}" alt="Preview" class="preview-image">
+                </div>
+                {% endif %}
+                
+                <div class="opengraph-data">
+                    <details>
+                        <summary>OpenGraph Data</summary>
+                        <dl class="og-data">
+                            <dt>Type:</dt>
+                            <dd>{{ url_record.og_type or "Not specified" }}</dd>
+                            <dt>Site Name:</dt>
+                            <dd>{{ url_record.site_name or "Not specified" }}</dd>
+                            <dt>Image URL:</dt>
+                            <dd>{{ url_record.image or "No image" }}</dd>
+                        </dl>
+                    </details>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="summaries-section">
+        <h2>LLM Summaries</h2>
+        
+        {% if summaries %}
+        <div class="summaries-list">
+            {% for summary in summaries %}
+            <div class="summary-card">
+                <div class="summary-header">
+                    <div class="summary-meta">
+                        <span class="model-badge">{{ summary.model_used }}</span>
+                        <span class="format-badge">{{ summary.format_type }}</span>
+                        {% if summary.fragment_used %}
+                        <span class="fragment-badge">{{ summary.fragment_used }}</span>
+                        {% endif %}
+                        <span class="timestamp">{{ summary.created_at }}</span>
+                    </div>
+                </div>
+                
+                <div class="summary-content">
+                    <div class="summary-text">{{ summary.content|safe }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="no-summaries">
+            <p>No summaries available for this URL.</p>
+            <a href="/" class="btn">Generate New Summary</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <form action="/submit" method="post" class="regenerate-form">
+            <input type="hidden" name="url" value="{{ url_record.url }}">
+            <div class="form-row">
+                <select name="model" class="form-select">
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                    <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                </select>
+                <select name="format_type" class="form-select">
+                    <option value="bullet">Bullet Points</option>
+                    <option value="paragraph">Paragraph</option>
+                    <option value="detailed">Detailed Analysis</option>
+                </select>
+                <button type="submit" class="btn btn-secondary">
+                    🔄 Generate New Summary
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

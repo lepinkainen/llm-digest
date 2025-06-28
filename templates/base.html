@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}LLM Digest{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="/" class="nav-brand">🔗 LLM Digest</a>
+                <div class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/search">Search</a>
+                    <a href="/datasette" target="_blank">Data Analysis</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <p>&copy; 2024 LLM Digest - URL Summarization Tool</p>
+        </div>
+    </footer>
+</body>
+</html>

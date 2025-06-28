@@ -33,6 +33,16 @@ dependencies = [
     "llm-fragments-reddit>=0.1.0",
     "llm-hacker-news>=0.1.0", 
     "llm-fragments-youtube>=0.1.0",
+    # Web application dependencies
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.6",
+    # OpenGraph and web scraping
+    "beautifulsoup4>=4.12.0",
+    "requests>=2.31.0",
+    # Data analysis
+    "datasette>=0.64.0",
 ]
 
 [project.optional-dependencies]
@@ -76,10 +86,12 @@ all = [
 
 [project.scripts]
 # Multiple entry points for flexibility
-url-summarizer = "enhanced_url_summarizer:main"
-summarize-url = "enhanced_url_summarizer:main"
-llm-summarizer = "enhanced_url_summarizer:main"
-esum = "enhanced_url_summarizer:main"
+url-summarizer = "claude_llm:main"
+summarize-url = "claude_llm:main"
+llm-summarizer = "claude_llm:main"
+esum = "claude_llm:main"
+# Web application entry point
+llm-digest-web = "web_app:main"
 
 [project.urls]
 Homepage = "https://github.com/yourusername/enhanced-url-summarizer"

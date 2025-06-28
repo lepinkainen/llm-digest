@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}LLM Digest - Home{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="hero">
+        <h1>🔗 LLM Digest</h1>
+        <p class="hero-subtitle">Summarize URLs using LLM fragments with OpenGraph data extraction</p>
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <span class="stat-number">{{ stats.url_count }}</span>
+            <span class="stat-label">URLs Processed</span>
+        </div>
+        <div class="stat">
+            <span class="stat-number">{{ stats.summary_count }}</span>
+            <span class="stat-label">Summaries Generated</span>
+        </div>
+    </div>
+
+    <div class="submit-section">
+        <form action="/submit" method="post" class="submit-form">
+            <div class="form-group">
+                <label for="url">URL to Summarize:</label>
+                <input 
+                    type="url" 
+                    id="url" 
+                    name="url" 
+                    placeholder="https://example.com/article" 
+                    required 
+                    class="url-input"
+                >
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="model">LLM Model:</label>
+                    <select id="model" name="model" class="form-select">
+                        <option value="gpt-4" selected>GPT-4</option>
+                        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        <option value="claude-3-sonnet">Claude 3 Sonnet</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="format_type">Output Format:</label>
+                    <select id="format_type" name="format_type" class="form-select">
+                        <option value="bullet" selected>Bullet Points</option>
+                        <option value="paragraph">Paragraph</option>
+                        <option value="detailed">Detailed Analysis</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">
+                📄 Generate Summary
+            </button>
+        </form>
+        
+        <div class="supported-sites">
+            <h3>Supported Sites:</h3>
+            <div class="site-badges">
+                <span class="site-badge">🔶 Reddit</span>
+                <span class="site-badge">📰 Hacker News</span>
+                <span class="site-badge">🎥 YouTube</span>
+            </div>
+        </div>
+    </div>
+
+    {% if recent_entries %}
+    <div class="recent-section">
+        <h2>Recent Summaries</h2>
+        <div class="entries-list">
+            {% for entry in recent_entries %}
+            <div class="entry-card">
+                <div class="entry-header">
+                    <h3>
+                        <a href="/results/{{ entry.id }}" class="entry-title">
+                            {{ entry.title or entry.url[:60] + "..." if entry.url|length > 60 else entry.url }}
+                        </a>
+                    </h3>
+                    <div class="entry-meta">
+                        {% if entry.site_name %}
+                        <span class="site-name">{{ entry.site_name }}</span>
+                        {% endif %}
+                        <span class="timestamp">{{ entry.created_at }}</span>
+                    </div>
+                </div>
+                
+                {% if entry.description %}
+                <p class="entry-description">{{ entry.description[:150] + "..." if entry.description|length > 150 else entry.description }}</p>
+                {% endif %}
+                
+                {% if entry.summary_content %}
+                <div class="entry-summary">
+                    <strong>Summary:</strong>
+                    {{ entry.summary_content[:200] + "..." if entry.summary_content|length > 200 else entry.summary_content }}
+                </div>
+                {% endif %}
+                
+                <div class="entry-footer">
+                    {% if entry.model_used %}
+                    <span class="model-badge">{{ entry.model_used }}</span>
+                    {% endif %}
+                    {% if entry.format_type %}
+                    <span class="format-badge">{{ entry.format_type }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

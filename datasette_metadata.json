@@ -1,0 +1,128 @@
+{
+  "title": "LLM Digest Database",
+  "description": "URL summaries and OpenGraph data analysis",
+  "source": "LLM Digest Web Application",
+  "source_url": "http://localhost:8000",
+  "databases": {
+    "llm_digest": {
+      "title": "LLM Digest",
+      "description": "URLs, OpenGraph metadata, and LLM-generated summaries",
+      "tables": {
+        "urls": {
+          "title": "URLs and OpenGraph Data",
+          "description": "Collected URLs with extracted OpenGraph metadata",
+          "sort": [
+            [
+              "created_at",
+              "desc"
+            ]
+          ],
+          "facets": [
+            "site_name",
+            "og_type"
+          ],
+          "columns": {
+            "id": "Unique identifier",
+            "url": "Original URL",
+            "title": "Page title from OpenGraph or HTML",
+            "description": "Page description from OpenGraph or meta tags",
+            "image": "Preview image URL",
+            "site_name": "Site name from OpenGraph",
+            "og_type": "OpenGraph content type",
+            "created_at": "When the URL was first processed"
+          }
+        },
+        "summaries": {
+          "title": "LLM Summaries",
+          "description": "AI-generated summaries of URL content",
+          "sort": [
+            [
+              "created_at",
+              "desc"
+            ]
+          ],
+          "facets": [
+            "model_used",
+            "format_type",
+            "fragment_used"
+          ],
+          "columns": {
+            "id": "Unique identifier",
+            "url_id": "Reference to URLs table",
+            "content": "Generated summary text",
+            "model_used": "LLM model that generated the summary",
+            "format_type": "Summary format (bullet, paragraph, detailed)",
+            "fragment_used": "LLM fragment used for processing",
+            "created_at": "When the summary was generated"
+          }
+        },
+        "urls_fts": {
+          "title": "URL Full-Text Search",
+          "description": "FTS5 virtual table for searching URL metadata",
+          "hidden": true
+        },
+        "summaries_fts": {
+          "title": "Summary Full-Text Search",
+          "description": "FTS5 virtual table for searching summary content",
+          "hidden": true
+        }
+      },
+      "queries": {
+        "recent_summaries": {
+          "title": "Recent Summaries with URLs",
+          "sql": "\n                            SELECT \n                                u.url,\n                                u.title,\n                                u.site_name,\n                                s.content,\n                                s.model_used,\n                                s.format_type,\n                                s.created_at\n                            FROM summaries s\n                            JOIN urls u ON s.url_id = u.id\n                            ORDER BY s.created_at DESC\n                            LIMIT 50\n                        "
+        },
+        "summary_by_model": {
+          "title": "Summaries by Model",
+          "sql": "\n                            SELECT \n                                model_used,\n                                COUNT(*) as count,\n                                AVG(LENGTH(content)) as avg_length\n                            FROM summaries\n                            GROUP BY model_used\n                            ORDER BY count DESC\n                        "
+        },
+        "sites_summary": {
+          "title": "Summary by Site",
+          "sql": "\n                            SELECT \n                                u.site_name,\n                                COUNT(DISTINCT u.id) as url_count,\n                                COUNT(s.id) as summary_count\n                            FROM urls u\n                            LEFT JOIN summaries s ON u.id = s.url_id\n                            WHERE u.site_name IS NOT NULL\n                            GROUP BY u.site_name\n                            ORDER BY url_count DESC\n                        "
+        },
+        "search_content": {
+          "title": "Search URLs and Summaries",
+          "sql": "\n                            SELECT \n                                'URL' as type,\n                                u.id,\n                                u.url,\n                                u.title,\n                                u.description as content,\n                                u.created_at\n                            FROM urls_fts\n                            JOIN urls u ON urls_fts.rowid = u.id\n                            WHERE urls_fts MATCH :query\n                            \n                            UNION ALL\n                            \n                            SELECT \n                                'Summary' as type,\n                                s.id,\n                                u.url,\n                                u.title,\n                                s.content,\n                                s.created_at\n                            FROM summaries_fts\n                            JOIN summaries s ON summaries_fts.rowid = s.id\n                            JOIN urls u ON s.url_id = u.id\n                            WHERE summaries_fts MATCH :query\n                            \n                            ORDER BY created_at DESC\n                        "
+        }
+      }
+    }
+  },
+  "plugins": {
+    "datasette-vega": {
+      "charts": {
+        "summaries_over_time": {
+          "title": "Summaries Over Time",
+          "database": "llm_digest",
+          "query": "\n                            SELECT \n                                DATE(created_at) as date,\n                                COUNT(*) as count\n                            FROM summaries\n                            GROUP BY DATE(created_at)\n                            ORDER BY date\n                        ",
+          "mark": "line",
+          "encoding": {
+            "x": {
+              "field": "date",
+              "type": "temporal"
+            },
+            "y": {
+              "field": "count",
+              "type": "quantitative"
+            }
+          }
+        },
+        "model_usage": {
+          "title": "Model Usage Distribution",
+          "database": "llm_digest",
+          "query": "\n                            SELECT \n                                model_used,\n                                COUNT(*) as count\n                            FROM summaries\n                            GROUP BY model_used\n                        ",
+          "mark": "arc",
+          "encoding": {
+            "theta": {
+              "field": "count",
+              "type": "quantitative"
+            },
+            "color": {
+              "field": "model_used",
+              "type": "nominal"
+            }
+          }
+        }
+      }
+    }
+  }
+}

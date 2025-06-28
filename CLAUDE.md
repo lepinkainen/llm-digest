@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Python CLI tool called "Enhanced URL Summarizer" that uses the `llm` library with LLM fragments to summarize content from supported websites (Reddit, Hacker News, YouTube). The tool is a single-file Python application with comprehensive configuration and error handling.
+This is a Python application that provides both CLI and web interfaces for URL summarization using the `llm` library with LLM fragments. It extracts OpenGraph metadata and generates AI summaries for supported websites (Reddit, Hacker News, YouTube). Data is stored in SQLite with FTS5 full-text search and can be analyzed using Datasette.
 
 ## Development Commands
 
@@ -45,6 +45,7 @@ pytest --cov=enhanced_url_summarizer --cov-report=html
 
 ### Running the Application
 
+#### CLI Tool
 ```bash
 # Interactive mode
 python claude-llm.py
@@ -59,43 +60,96 @@ python claude-llm.py --model gpt-3.5-turbo --format paragraph "https://news.ycom
 python claude-llm.py --debug "https://youtube.com/watch?v=abc123"
 ```
 
+#### Web Application
+```bash
+# Start the web server
+python web_app.py
+
+# With custom options
+python web_app.py --host 0.0.0.0 --port 8080 --reload
+
+# Access at http://localhost:8000
+```
+
+#### Data Analysis
+```bash
+# Generate Datasette configuration
+python datasette_config.py
+
+# Start Datasette for data analysis
+./start_datasette.sh
+
+# Access at http://localhost:8001
+```
+
 ## Architecture
 
 ### Core Components
 
-- **URLSummarizer class**: Main application logic with URL detection, fragment mapping, and LLM interaction
+#### CLI Tool (`claude-llm.py`)
+- **URLSummarizer class**: Original CLI logic with URL detection, fragment mapping, and LLM interaction
 - **SummaryConfig dataclass**: Configuration management for models, formats, timeouts, and debug settings
-- **Fragment mappings**: Maps domains to appropriate LLM fragment packages:
-  - `reddit.com` → `llm-fragments-reddit`
-  - `news.ycombinator.com` → `llm-hacker-news`
-  - `youtube.com`/`youtu.be` → `llm-fragments-youtube`
 
-### URL Processing Pipeline
+#### Web Application (`web_app.py`)
+- **FastAPI application**: Web interface with form submission and results display
+- **URL processor service**: Combines OpenGraph extraction with LLM summarization
+- **Database integration**: SQLite storage with FTS5 full-text search
 
-1. URL validation using `urllib.parse`
-2. Domain detection and fragment selection
-3. ID extraction using regex patterns and URL parsing fallbacks
-4. LLM fragment execution via subprocess calls to `llm` CLI
-5. Error handling with user-friendly messages and troubleshooting guidance
+#### Services (`services.py`)
+- **OpenGraphExtractor**: Extracts metadata from web pages using BeautifulSoup
+- **LLMSummaryService**: Refactored summarization logic using LLM fragments
+- **URLProcessor**: High-level service combining extraction and summarization
+
+#### Database (`database.py`)
+- **DatabaseManager**: SQLite operations with FTS5 search capabilities
+- **URLRecord/SummaryRecord**: Data models for URL metadata and summaries
+- **FTS5 integration**: Full-text search on URLs and summary content
+
+#### Fragment Mappings
+- `reddit.com` → `llm-fragments-reddit`
+- `news.ycombinator.com` → `llm-hacker-news`
+- `youtube.com`/`youtu.be` → `llm-fragments-youtube`
+
+### Processing Pipeline
+
+1. **Web Form Submission**: User submits URL via web interface
+2. **OpenGraph Extraction**: Fetch page metadata (title, description, image, site info)
+3. **URL Validation**: Check format and detect supported site type
+4. **Fragment Selection**: Choose appropriate LLM fragment based on domain
+5. **LLM Summarization**: Generate summary using selected fragment and model
+6. **Database Storage**: Save URL metadata and summary with FTS5 indexing
+7. **Results Display**: Show combined OpenGraph data and summary
 
 ### Dependencies
 
-- **Core**: `llm` library and site-specific fragment packages
+- **Core**: `llm`, `fastapi`, `uvicorn`, `beautifulsoup4`, `requests`, `datasette`
+- **LLM Fragments**: `llm-fragments-reddit`, `llm-hacker-news`, `llm-fragments-youtube`
 - **Dev**: `black`, `ruff`, `mypy`, `pytest`, `pre-commit`
 - **Python**: Requires Python 3.12+
 
 ## Configuration
 
-The tool uses `pyproject.toml` for comprehensive configuration including:
+The application uses `pyproject.toml` for comprehensive configuration including:
 
 - Build system with `hatchling`
+- Web and CLI dependencies management
 - Black, Ruff, and MyPy settings
 - Pytest configuration with coverage
-- Multiple entry point scripts: `url-summarizer`, `summarize-url`, `llm-summarizer`, `esum`
+- Multiple entry point scripts: `url-summarizer`, `summarize-url`, `llm-summarizer`, `esum`, `llm-digest-web`
 
 ## External Dependencies
 
-The application requires the `llm` CLI tool to be installed and configured with API keys for the chosen model provider (OpenAI, etc.).
+The application requires:
+- `llm` CLI tool installed and configured with API keys for the chosen model provider (OpenAI, etc.)
+- LLM fragment packages for supported sites
+- For web deployment: FastAPI and Uvicorn
+- For data analysis: Datasette with the generated database
+
+## Data Storage
+
+- **SQLite Database**: `llm_digest.db` with FTS5 full-text search
+- **Tables**: `urls` (OpenGraph data), `summaries` (LLM output), FTS5 virtual tables
+- **Datasette Integration**: Web-based database exploration and analysis
 
 ## Memories
 

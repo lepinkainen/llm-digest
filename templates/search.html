@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Search - LLM Digest{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="search-header">
+        <h1>🔍 Search LLM Digest</h1>
+        <p>Search through URLs, OpenGraph data, and LLM summaries using full-text search</p>
+    </div>
+
+    <form action="/search" method="get" class="search-form">
+        <div class="search-input-group">
+            <input 
+                type="text" 
+                name="q" 
+                value="{{ query or '' }}" 
+                placeholder="Enter your search query..." 
+                class="search-input"
+                autofocus
+            >
+            <button type="submit" class="search-btn">🔍 Search</button>
+        </div>
+        
+        <div class="search-filters">
+            <label class="filter-label">
+                <input type="radio" name="type" value="all" {% if search_type == 'all' %}checked{% endif %}>
+                All Content
+            </label>
+            <label class="filter-label">
+                <input type="radio" name="type" value="urls" {% if search_type == 'urls' %}checked{% endif %}>
+                URLs & OpenGraph
+            </label>
+            <label class="filter-label">
+                <input type="radio" name="type" value="summaries" {% if search_type == 'summaries' %}checked{% endif %}>
+                Summaries Only
+            </label>
+        </div>
+    </form>
+
+    {% if query %}
+    <div class="search-results">
+        <h2>Search Results for "{{ query }}"</h2>
+        
+        {% if search_type == 'all' and results %}
+            {% if results.urls %}
+            <div class="results-section">
+                <h3>📄 URLs & OpenGraph Data ({{ results.urls|length }})</h3>
+                <div class="results-list">
+                    {% for result in results.urls %}
+                    <div class="result-card">
+                        <h4>
+                            <a href="/results/{{ result.id }}" class="result-title">
+                                {{ result.title or result.url }}
+                            </a>
+                        </h4>
+                        <p class="result-url">{{ result.url }}</p>
+                        {% if result.description %}
+                        <p class="result-description">{{ result.description }}</p>
+                        {% endif %}
+                        <div class="result-meta">
+                            {% if result.site_name %}
+                            <span class="site-name">{{ result.site_name }}</span>
+                            {% endif %}
+                            <span class="timestamp">{{ result.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if results.summaries %}
+            <div class="results-section">
+                <h3>📝 Summaries ({{ results.summaries|length }})</h3>
+                <div class="results-list">
+                    {% for result in results.summaries %}
+                    <div class="result-card">
+                        <h4>
+                            <a href="/results/{{ result.url_id }}" class="result-title">
+                                {{ result.title or result.url }}
+                            </a>
+                        </h4>
+                        <p class="result-url">{{ result.url }}</p>
+                        <div class="summary-preview">{{ result.content[:200] + "..." if result.content|length > 200 else result.content }}</div>
+                        <div class="result-meta">
+                            <span class="model-badge">{{ result.model_used }}</span>
+                            <span class="format-badge">{{ result.format_type }}</span>
+                            <span class="timestamp">{{ result.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+        {% elif search_type == 'urls' and results %}
+            <div class="results-section">
+                <h3>📄 URLs & OpenGraph Data ({{ results|length }})</h3>
+                <div class="results-list">
+                    {% for result in results %}
+                    <div class="result-card">
+                        <h4>
+                            <a href="/results/{{ result.id }}" class="result-title">
+                                {{ result.title or result.url }}
+                            </a>
+                        </h4>
+                        <p class="result-url">{{ result.url }}</p>
+                        {% if result.description %}
+                        <p class="result-description">{{ result.description }}</p>
+                        {% endif %}
+                        <div class="result-meta">
+                            {% if result.site_name %}
+                            <span class="site-name">{{ result.site_name }}</span>
+                            {% endif %}
+                            <span class="timestamp">{{ result.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        {% elif search_type == 'summaries' and results %}
+            <div class="results-section">
+                <h3>📝 Summaries ({{ results|length }})</h3>
+                <div class="results-list">
+                    {% for result in results %}
+                    <div class="result-card">
+                        <h4>
+                            <a href="/results/{{ result.url_id }}" class="result-title">
+                                {{ result.title or result.url }}
+                            </a>
+                        </h4>
+                        <p class="result-url">{{ result.url }}</p>
+                        <div class="summary-preview">{{ result.content[:200] + "..." if result.content|length > 200 else result.content }}</div>
+                        <div class="result-meta">
+                            <span class="model-badge">{{ result.model_used }}</span>
+                            <span class="format-badge">{{ result.format_type }}</span>
+                            <span class="timestamp">{{ result.created_at }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+        {% else %}
+            <div class="no-results">
+                <p>No results found for "{{ query }}"</p>
+                <p>Try different search terms or search in all content types.</p>
+            </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="search-tips">
+        <h3>Search Tips</h3>
+        <ul>
+            <li>Use specific keywords from titles, descriptions, or summary content</li>
+            <li>Search for domain names to find all content from specific sites</li>
+            <li>Use model names (like "gpt-4") to find summaries by specific models</li>
+            <li>FTS5 supports phrase searches with quotes: "exact phrase"</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
