@@ -151,7 +151,7 @@ known-first-party = ["enhanced_url_summarizer"]
 
 # MyPy configuration
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.13"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true

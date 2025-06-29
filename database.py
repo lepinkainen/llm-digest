@@ -5,11 +5,11 @@ Handles SQLite database with FTS5 for full-text search capabilities.
 """
 
 import sqlite3
-import json
-from datetime import datetime
-from typing import Optional, List, Dict, Any
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Optional
+
+from config import settings
 
 
 @dataclass
@@ -39,9 +39,6 @@ class SummaryRecord:
     created_at: Optional[str] = None
 
 
-from config import settings
-
-
 class DatabaseManager:
     """Manages SQLite database operations with FTS5 support."""
 
@@ -56,7 +53,7 @@ class DatabaseManager:
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.init_database()
 
-    def close(self):
+    def close(self) -> None:
         """Close the database connection."""
         if self.conn:
             self.conn.close()
@@ -211,7 +208,7 @@ class DatabaseManager:
             return URLRecord(**dict(row))
         return None
 
-    def get_summaries_for_url(self, url_id: int) -> List[SummaryRecord]:
+    def get_summaries_for_url(self, url_id: int) -> list[SummaryRecord]:
         """Get all summaries for a URL."""
         rows = self.conn.execute(
             "SELECT * FROM summaries WHERE url_id = ? ORDER BY created_at DESC",
@@ -220,7 +217,7 @@ class DatabaseManager:
 
         return [SummaryRecord(**dict(row)) for row in rows]
 
-    def get_recent_entries(self, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_entries(self, limit: int = 50) -> list[dict[str, Any]]:
         """Get recent URL entries with their latest summaries."""
         rows = self.conn.execute(
             """
@@ -245,7 +242,7 @@ class DatabaseManager:
 
         return [dict(row) for row in rows]
 
-    def search_urls(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
+    def search_urls(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """Full-text search URLs using FTS5."""
         rows = self.conn.execute(
             """
@@ -261,7 +258,7 @@ class DatabaseManager:
 
         return [dict(row) for row in rows]
 
-    def search_summaries(self, query: str, limit: int = 50) -> List[Dict[str, Any]]:
+    def search_summaries(self, query: str, limit: int = 50) -> list[dict[str, Any]]:
         """Full-text search summaries using FTS5."""
         rows = self.conn.execute(
             """
@@ -278,7 +275,7 @@ class DatabaseManager:
 
         return [dict(row) for row in rows]
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get database statistics."""
         url_count = self.conn.execute("SELECT COUNT(*) FROM urls").fetchone()[0]
         summary_count = self.conn.execute("SELECT COUNT(*) FROM summaries").fetchone()[
