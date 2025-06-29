@@ -1,7 +1,10 @@
 
-import pytest
 from unittest.mock import MagicMock
-from services import URLProcessor, URLRecord, SummaryRecord, SummaryConfig
+
+import pytest
+
+from services import SummaryRecord, URLProcessor, URLRecord
+
 
 @pytest.fixture
 def mock_og_extractor():
@@ -19,8 +22,8 @@ def mock_summary_service():
     """Mocks the LLMSummaryService."""
     mock = MagicMock()
     mock.generate_summary.return_value = (
-        True, 
-        SummaryRecord(content="Mocked Summary", model_used="mock-model"), 
+        True,
+        SummaryRecord(content="Mocked Summary", model_used="mock-model"),
         None
     )
     return mock

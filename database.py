@@ -158,7 +158,7 @@ class DatabaseManager:
 
         self.conn.commit()
 
-    def insert_url(self, url_record: URLRecord) -> int:
+    def insert_url(self, url_record: URLRecord) -> int | None:
         """Insert URL record and return the ID."""
         cursor = self.conn.execute(
             """
@@ -177,7 +177,7 @@ class DatabaseManager:
         self.conn.commit()
         return cursor.lastrowid
 
-    def insert_summary(self, summary_record: SummaryRecord) -> int:
+    def insert_summary(self, summary_record: SummaryRecord) -> int | None:
         """Insert summary record and return the ID."""
         cursor = self.conn.execute(
             """

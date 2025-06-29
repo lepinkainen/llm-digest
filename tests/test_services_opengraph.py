@@ -1,5 +1,6 @@
 import pytest
 import responses
+
 from services import OpenGraphExtractor, URLRecord
 
 

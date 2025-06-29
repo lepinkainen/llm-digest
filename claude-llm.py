@@ -24,6 +24,7 @@ from typing import Optional
 # Import model discovery if available (for validation)
 try:
     from services import LLMModelDiscovery
+
     MODEL_DISCOVERY_AVAILABLE = True
 except ImportError:
     MODEL_DISCOVERY_AVAILABLE = False

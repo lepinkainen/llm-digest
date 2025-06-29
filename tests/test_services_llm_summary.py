@@ -1,8 +1,11 @@
 
-import pytest
 import subprocess
 from unittest.mock import MagicMock
+
+import pytest
+
 from services import LLMSummaryService, SummaryConfig, SummaryRecord
+
 
 @pytest.fixture
 def summary_service() -> LLMSummaryService:

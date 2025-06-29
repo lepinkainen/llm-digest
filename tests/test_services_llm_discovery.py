@@ -1,8 +1,11 @@
 
-import pytest
 import subprocess
 from unittest.mock import MagicMock
-from services import LLMModelDiscovery, LLMModel
+
+import pytest
+
+from services import LLMModelDiscovery
+
 
 @pytest.fixture
 def model_discovery() -> LLMModelDiscovery:

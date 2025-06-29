@@ -128,7 +128,7 @@ extend-exclude = '''
 [tool.ruff]
 line-length = 88
 target-version = "py39"
-select = [
+lint.select = [
     "E",  # pycodestyle errors
     "W",  # pycodestyle warnings
     "F",  # pyflakes
@@ -138,15 +138,15 @@ select = [
     "UP", # pyupgrade
     "N",  # pep8-naming
 ]
-ignore = [
+lint.ignore = [
     "E501",  # line too long, handled by black
     "B008",  # do not perform function calls in argument defaults
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["enhanced_url_summarizer"]
 
 # MyPy configuration

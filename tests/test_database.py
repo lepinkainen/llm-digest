@@ -1,5 +1,6 @@
 import pytest
-from database import DatabaseManager, URLRecord, SummaryRecord
+
+from database import DatabaseManager, SummaryRecord, URLRecord
 
 
 @pytest.fixture
@@ -55,6 +56,8 @@ def test_insert_and_get_summary(db_manager: DatabaseManager):
     url_record = URLRecord(url="https://summary.test")
     url_id = db_manager.insert_url(url_record)
 
+    assert isinstance(url_id, int)
+
     summary_record = SummaryRecord(
         url_id=url_id,
         content="This is a test summary.",
@@ -79,6 +82,8 @@ def test_full_text_search(db_manager: DatabaseManager):
         description="A test page for searching.",
     )
     url_id = db_manager.insert_url(url_record)
+
+    assert isinstance(url_id, int)
 
     # Insert Summary
     summary_record = SummaryRecord(
