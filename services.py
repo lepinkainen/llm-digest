@@ -13,14 +13,14 @@ from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 
+from config import settings
 from database import SummaryRecord, URLRecord
 
-
-from config import settings
 
 @dataclass
 class SummaryConfig:
     """Configuration for summary generation."""
+
     model: str = settings.LLM_DEFAULT_MODEL
     format: str = settings.LLM_DEFAULT_FORMAT
     timeout: int = settings.LLM_TIMEOUT
@@ -31,6 +31,7 @@ class SummaryConfig:
 @dataclass
 class LLMModel:
     """Represents an available LLM model."""
+
     name: str
     provider: str
     aliases: list[str]
@@ -53,7 +54,9 @@ class LLMModelDiscovery:
             LLMModel("gpt-4o", "OpenAI Chat", ["4o"], True, False, 1),
             LLMModel("gpt-4o-mini", "OpenAI Chat", ["4o-mini"], True, False, 2),
             LLMModel("gpt-4", "OpenAI Chat", ["4", "gpt4"], True, False, 3),
-            LLMModel("gpt-3.5-turbo", "OpenAI Chat", ["3.5", "chatgpt"], True, False, 4),
+            LLMModel(
+                "gpt-3.5-turbo", "OpenAI Chat", ["3.5", "chatgpt"], True, False, 4
+            ),
         ]
 
         # Model prioritization rules
@@ -62,11 +65,9 @@ class LLMModelDiscovery:
             "OpenAI Chat": 10,
             "GeminiPro": 20,
             "OpenAI Completion": 30,
-
             # Model type preferences
             "chat_bonus": -5,  # Chat models are preferred
             "experimental_penalty": 50,  # Experimental models get lower priority
-
             # Specific model bonuses (applied to base priority)
             "gpt-4o": -10,
             "gpt-4o-mini": -8,
@@ -85,10 +86,7 @@ class LLMModelDiscovery:
         """Run 'llm models list' and return output."""
         try:
             result = subprocess.run(
-                ["llm", "models", "list"],
-                capture_output=True,
-                text=True,
-                timeout=10
+                ["llm", "models", "list"], capture_output=True, text=True, timeout=10
             )
             if result.returncode == 0:
                 return result.stdout
@@ -100,13 +98,13 @@ class LLMModelDiscovery:
         """Parse the output of 'llm models list' into LLMModel objects."""
         models = []
 
-        for line in output.strip().split('\n'):
+        for line in output.strip().split("\n"):
             line = line.strip()
-            if not line or line.startswith('Default:'):
+            if not line or line.startswith("Default:"):
                 continue
 
             # Parse format: "Provider: model_name (aliases: alias1, alias2)"
-            parts = line.split(': ', 1)
+            parts = line.split(": ", 1)
             if len(parts) != 2:
                 continue
 
@@ -118,33 +116,44 @@ class LLMModelDiscovery:
             if match:
                 model_name = match.group(1).strip()
                 aliases_str = match.group(2)
-                aliases = [alias.strip() for alias in aliases_str.split(', ')] if aliases_str else []
+                aliases = (
+                    [alias.strip() for alias in aliases_str.split(", ")]
+                    if aliases_str
+                    else []
+                )
             else:
                 model_name = model_part
                 aliases = []
-            print(f"DEBUG: Parsed model_name: {model_name}, Aliases: {aliases}")
+            # print(f"DEBUG: Parsed model_name: {model_name}, Aliases: {aliases}")
 
             # Determine model characteristics
-            is_chat = provider.endswith('Chat') or not provider.endswith('Completion')
-            is_experimental = any(re.search(r'\b' + keyword + r'\b', model_name.lower()) for keyword in [
-                'preview', 'experimental', 'exp', 'thinking', 'test'
-            ])
+            is_chat = provider.endswith("Chat") or not provider.endswith("Completion")
+            is_experimental = any(
+                re.search(r"\b" + keyword + r"\b", model_name.lower())
+                for keyword in ["preview", "experimental", "exp", "thinking", "test"]
+            )
 
             # Calculate priority
-            priority = self._calculate_priority(provider, model_name, is_chat, is_experimental)
+            priority = self._calculate_priority(
+                provider, model_name, is_chat, is_experimental
+            )
 
-            models.append(LLMModel(
-                name=model_name,
-                provider=provider,
-                aliases=aliases,
-                is_chat=is_chat,
-                is_experimental=is_experimental,
-                priority=priority
-            ))
+            models.append(
+                LLMModel(
+                    name=model_name,
+                    provider=provider,
+                    aliases=aliases,
+                    is_chat=is_chat,
+                    is_experimental=is_experimental,
+                    priority=priority,
+                )
+            )
 
         return models
 
-    def _calculate_priority(self, provider: str, model_name: str, is_chat: bool, is_experimental: bool) -> int:
+    def _calculate_priority(
+        self, provider: str, model_name: str, is_chat: bool, is_experimental: bool
+    ) -> int:
         """Calculate priority score for a model (lower = higher priority)."""
         priority = self.priority_rules.get(provider, 100)
 
@@ -155,18 +164,23 @@ class LLMModelDiscovery:
             priority += self.priority_rules["experimental_penalty"]
 
         # Apply specific model bonuses - sort by length of key to apply most specific first
-        sorted_model_bonuses = sorted([
-            (k, v) for k, v in self.priority_rules.items()
-            if isinstance(v, int) and v < 0 and k in model_name
-        ], key=lambda item: len(item[0]), reverse=True)
+        sorted_model_bonuses = sorted(
+            [
+                (k, v)
+                for k, v in self.priority_rules.items()
+                if isinstance(v, int) and v < 0 and k in model_name
+            ],
+            key=lambda item: len(item[0]),
+            reverse=True,
+        )
 
         for model_key, bonus in sorted_model_bonuses:
             priority += bonus
-            break # Apply only the most specific bonus
+            break  # Apply only the most specific bonus
 
         for model_key, bonus in sorted_model_bonuses:
             priority += bonus
-            break # Apply only the most specific bonus
+            break  # Apply only the most specific bonus
 
         return priority
 
@@ -176,12 +190,15 @@ class LLMModelDiscovery:
         Returns filtered and prioritized list of models.
         """
         import time
+
         current_time = time.time()
 
         # Use cache if valid and not forcing refresh
-        if (not force_refresh and
-            self._cached_models is not None and
-            current_time - self._cache_timestamp < self.cache_timeout):
+        if (
+            not force_refresh
+            and self._cached_models is not None
+            and current_time - self._cache_timestamp < self.cache_timeout
+        ):
             return self._cached_models
 
         # Try to discover models
@@ -210,13 +227,21 @@ class LLMModelDiscovery:
                 continue
 
             # Skip very old or deprecated models
-            if any(keyword in model.name.lower() for keyword in [
-                '1106-preview', '0125-preview', '32k', 'instruct', 'davinci', 'curie'
-            ]):
+            if any(
+                keyword in model.name.lower()
+                for keyword in [
+                    "1106-preview",
+                    "0125-preview",
+                    "32k",
+                    "instruct",
+                    "davinci",
+                    "curie",
+                ]
+            ):
                 continue
 
             # Skip audio/specialized models for text summarization
-            if any(keyword in model.name.lower() for keyword in ['audio']):
+            if any(keyword in model.name.lower() for keyword in ["audio"]):
                 continue
 
             filtered.append(model)
@@ -238,18 +263,15 @@ class LLMModelDiscovery:
         """Get models organized by category for better user experience."""
         all_models = self.discover_models()
 
-        categories = {
-            "recommended": [],
-            "budget": [],
-            "alternative": []
-        }
+        categories = {"recommended": [], "budget": [], "alternative": []}
 
         # Categorize models
         for model in all_models:
             # Budget models (fast and cost-effective)
-            if any(keyword in model.name.lower() for keyword in [
-                'mini', '3.5', 'flash-8b', 'nano'
-            ]):
+            if any(
+                keyword in model.name.lower()
+                for keyword in ["mini", "3.5", "flash-8b", "nano"]
+            ):
                 categories["budget"].append(model)
             # Alternative providers (non-OpenAI)
             elif not model.provider.startswith("OpenAI"):
@@ -291,8 +313,9 @@ class LLMModelDiscovery:
         # Look for partial matches
         name_lower = name.lower()
         for model in models[:5]:  # Top 5 models
-            if (name_lower in model.name.lower() or
-                any(name_lower in alias.lower() for alias in model.aliases)):
+            if name_lower in model.name.lower() or any(
+                name_lower in alias.lower() for alias in model.aliases
+            ):
                 suggestions.append(model.name)
 
         if not suggestions:
@@ -311,9 +334,11 @@ class OpenGraphExtractor:
         """Initialize with request timeout."""
         self.timeout = timeout
         self.session = requests.Session()
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+        )
 
     def extract(self, url: str) -> URLRecord:
         """Extract OpenGraph data from URL and return URLRecord."""
@@ -323,25 +348,29 @@ class OpenGraphExtractor:
             response = self.session.get(url, timeout=self.timeout)
             response.raise_for_status()
 
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, "html.parser")
 
             # Extract OpenGraph properties
-            record.title = self._get_meta_content(soup, 'og:title') or self._get_title(soup)
-            record.description = self._get_meta_content(soup, 'og:description') or self._get_meta_content(soup, 'description')
-            record.image = self._get_meta_content(soup, 'og:image')
-            record.site_name = self._get_meta_content(soup, 'og:site_name')
-            record.og_type = self._get_meta_content(soup, 'og:type')
+            record.title = self._get_meta_content(soup, "og:title") or self._get_title(
+                soup
+            )
+            record.description = self._get_meta_content(
+                soup, "og:description"
+            ) or self._get_meta_content(soup, "description")
+            record.image = self._get_meta_content(soup, "og:image")
+            record.site_name = self._get_meta_content(soup, "og:site_name")
+            record.og_type = self._get_meta_content(soup, "og:type")
 
             # Fallback to basic HTML if OpenGraph not available
             if not record.title:
-                title_tag = soup.find('title')
+                title_tag = soup.find("title")
                 if title_tag:
                     record.title = title_tag.get_text().strip()
 
             if not record.description:
-                desc_tag = soup.find('meta', attrs={'name': 'description'})
+                desc_tag = soup.find("meta", attrs={"name": "description"})
                 if desc_tag:
-                    record.description = desc_tag.get('content', '').strip()
+                    record.description = desc_tag.get("content", "").strip()
 
         except Exception as e:
             print(f"🔧 DEBUG: Failed to extract OpenGraph data from {url}: {e}")
@@ -349,23 +378,25 @@ class OpenGraphExtractor:
 
         return record
 
-    def _get_meta_content(self, soup: BeautifulSoup, property_name: str) -> Optional[str]:
+    def _get_meta_content(
+        self, soup: BeautifulSoup, property_name: str
+    ) -> Optional[str]:
         """Get content from meta tag by property or name."""
         # Try OpenGraph property first
-        tag = soup.find('meta', property=property_name)
-        if tag and tag.get('content'):
-            return tag['content'].strip()
+        tag = soup.find("meta", property=property_name)
+        if tag and tag.get("content"):
+            return tag["content"].strip()
 
         # Try name attribute
-        tag = soup.find('meta', attrs={'name': property_name})
-        if tag and tag.get('content'):
-            return tag['content'].strip()
+        tag = soup.find("meta", attrs={"name": property_name})
+        if tag and tag.get("content"):
+            return tag["content"].strip()
 
         return None
 
     def _get_title(self, soup: BeautifulSoup) -> Optional[str]:
         """Get page title from title tag."""
-        title_tag = soup.find('title')
+        title_tag = soup.find("title")
         if title_tag:
             return title_tag.get_text().strip()
         return None
@@ -408,7 +439,9 @@ class LLMSummaryService:
 
         # Validate llm installation
         if not self._check_llm_installed():
-            raise RuntimeError("'llm' library not found. Please install it with: uv add llm")
+            raise RuntimeError(
+                "'llm' library not found. Please install it with: uv add llm"
+            )
 
     def _check_llm_installed(self) -> bool:
         """Check if the llm command is available."""
@@ -566,7 +599,9 @@ class LLMSummaryService:
             self.config.format, self.system_prompts["bullet"]
         )
 
-    def generate_summary(self, url: str) -> tuple[bool, Optional[SummaryRecord], Optional[str]]:
+    def generate_summary(
+        self, url: str
+    ) -> tuple[bool, Optional[SummaryRecord], Optional[str]]:
         """
         Generate summary for URL.
         Returns tuple of (success, summary_record, error_message)
@@ -613,7 +648,7 @@ class LLMSummaryService:
                     content=result.stdout.strip(),
                     model_used=self.config.model,
                     format_type=self.config.format,
-                    fragment_used=fragment_name
+                    fragment_used=fragment_name,
                 )
                 return True, summary_record, None
             else:
@@ -639,7 +674,9 @@ class URLProcessor:
         self.og_extractor = OpenGraphExtractor()
         self.summary_service = LLMSummaryService(summary_config)
 
-    def process_url(self, url: str) -> tuple[URLRecord, Optional[SummaryRecord], Optional[str]]:
+    def process_url(
+        self, url: str
+    ) -> tuple[URLRecord, Optional[SummaryRecord], Optional[str]]:
         """
         Process URL to extract OpenGraph data and generate summary.
         Returns tuple of (url_record, summary_record, error_message)
@@ -651,4 +688,3 @@ class URLProcessor:
         success, summary_record, error_msg = self.summary_service.generate_summary(url)
 
         return url_record, summary_record, error_msg
-
