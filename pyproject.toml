@@ -43,6 +43,7 @@ dependencies = [
     "requests>=2.31.0",
     # Data analysis
     "datasette>=0.64.0",
+    "pydantic-settings>=2.0.0",
 ]
 
 [project.optional-dependencies]

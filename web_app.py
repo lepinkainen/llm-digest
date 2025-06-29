@@ -17,6 +17,11 @@ from fastapi.templating import Jinja2Templates
 from database import DatabaseManager
 from services import LLMModelDiscovery, SummaryConfig, URLProcessor
 
+from config import settings
+
+from database import DatabaseManager
+from services import LLMModelDiscovery, SummaryConfig, URLProcessor
+
 # Initialize FastAPI app
 app = FastAPI(
     title="LLM Digest",
@@ -25,7 +30,7 @@ app = FastAPI(
 )
 
 # Initialize services
-db = DatabaseManager()
+db = DatabaseManager(settings.DATABASE_URL)
 url_processor = URLProcessor()
 model_discovery = LLMModelDiscovery()
 
@@ -77,9 +82,9 @@ async def submit_url(
 
     # Configure processing
     config = SummaryConfig(
-        model=model,
-        format=format_type,
-        debug=False
+        model=model if model != "default" else settings.LLM_DEFAULT_MODEL,
+        format=format_type if format_type != "default" else settings.LLM_DEFAULT_FORMAT,
+        debug=settings.LLM_DEBUG_MODE
     )
 
     # Create processor with custom config
@@ -189,7 +194,8 @@ async def get_models():
                 for model in models
             ]
         }
-    except Exception:
+    except Exception as e:
+        print(f"ERROR: Failed to fetch models: {e}")
         # Return fallback models if discovery fails
         return {
             "models": [
@@ -235,6 +241,9 @@ async def get_models_by_category():
         }
 
 
+
+
+
 @app.get("/datasette")
 async def datasette_redirect():
     """Redirect to Datasette instance."""
@@ -253,26 +262,12 @@ def _is_valid_url(url: str) -> bool:
 
 def main():
     """Main entry point for the web application."""
-    import argparse
-
-    parser = argparse.ArgumentParser(description="LLM Digest Web Application")
-    parser.add_argument("--host", default="127.0.0.1", help="Host to bind to")
-    parser.add_argument("--port", type=int, default=8000, help="Port to bind to")
-    parser.add_argument("--reload", action="store_true", help="Enable auto-reload")
-    parser.add_argument("--db", default="llm_digest.db", help="Database file path")
-
-    args = parser.parse_args()
-
-    # Initialize database with custom path
-    global db
-    db = DatabaseManager(args.db)
-
     # Run the application
     uvicorn.run(
         "web_app:app",
-        host=args.host,
-        port=args.port,
-        reload=args.reload
+        host=settings.WEB_APP_HOST,
+        port=settings.WEB_APP_PORT,
+        reload=settings.WEB_APP_RELOAD
     )
 
 

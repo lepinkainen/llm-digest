@@ -1,0 +1,30 @@
+version: "3"
+
+tasks:
+  lint:
+    cmds:
+      - ruff check .
+      - mypy .
+
+  test:
+    cmds:
+      - .venv/bin/python -m pytest
+
+  test-ci:
+    cmds:
+      - echo "CI testing not yet configured."
+
+  build:
+    deps: [lint, test]
+    cmds:
+      - echo "No build step required for this project."
+
+  build-linux:
+    deps: [lint, test]
+    cmds:
+      - echo "No linux build step required for this project."
+
+  build-ci:
+    deps: [lint, test-ci]
+    cmds:
+      - echo "No CI build step required for this project."

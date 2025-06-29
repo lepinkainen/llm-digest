@@ -61,6 +61,9 @@ A comprehensive command-line tool that automatically summarizes URLs using appro
 git clone <repository-url>
 cd enhanced-url-summarizer
 
+# Initialize and update submodules
+git submodule update --init --recursive
+
 # Install with uv (installs all dependencies)
 uv sync
 
@@ -89,6 +92,14 @@ llm --version
 
 # Configure your LLM provider (required)
 llm keys set openai  # or your preferred provider
+```
+
+## 📚 Shared Resources
+
+This project utilizes shared resources from the `llm-shared` submodule. To ensure you have the latest guidelines and tools, always update the submodule:
+
+```bash
+git submodule update --remote --merge
 ```
 
 ## 📖 Usage

@@ -16,14 +16,16 @@ from bs4 import BeautifulSoup
 from database import SummaryRecord, URLRecord
 
 
+from config import settings
+
 @dataclass
 class SummaryConfig:
     """Configuration for summary generation."""
-    model: str = "gpt-4"
-    format: str = "bullet"  # bullet, paragraph, detailed
-    timeout: int = 120
+    model: str = settings.LLM_DEFAULT_MODEL
+    format: str = settings.LLM_DEFAULT_FORMAT
+    timeout: int = settings.LLM_TIMEOUT
     system_prompt: Optional[str] = None
-    debug: bool = False
+    debug: bool = settings.LLM_DEBUG_MODE
 
 
 @dataclass
@@ -74,6 +76,11 @@ class LLMModelDiscovery:
             "gemini-1.5-pro-latest": -2,
         }
 
+    def _log_debug(self, message: str) -> None:
+        """Log debug messages if debug mode is enabled."""
+        # For testing, we'll just print to stdout
+        print(f"DEBUG: {message}")
+
     def _run_llm_models_list(self) -> Optional[str]:
         """Run 'llm models list' and return output."""
         try:
@@ -106,18 +113,20 @@ class LLMModelDiscovery:
             provider = parts[0].strip()
             model_part = parts[1].strip()
 
-            # Extract model name and aliases
-            if ' (aliases: ' in model_part:
-                model_name, aliases_part = model_part.split(' (aliases: ', 1)
-                aliases_str = aliases_part.rstrip(')')
-                aliases = [alias.strip() for alias in aliases_str.split(', ')]
+            # Extract model name and aliases using regex
+            match = re.match(r"^(.*?)(?: \(aliases: (.*)\))?$", model_part)
+            if match:
+                model_name = match.group(1).strip()
+                aliases_str = match.group(2)
+                aliases = [alias.strip() for alias in aliases_str.split(', ')] if aliases_str else []
             else:
                 model_name = model_part
                 aliases = []
+            print(f"DEBUG: Parsed model_name: {model_name}, Aliases: {aliases}")
 
             # Determine model characteristics
             is_chat = provider.endswith('Chat') or not provider.endswith('Completion')
-            is_experimental = any(keyword in model_name.lower() for keyword in [
+            is_experimental = any(re.search(r'\b' + keyword + r'\b', model_name.lower()) for keyword in [
                 'preview', 'experimental', 'exp', 'thinking', 'test'
             ])
 
@@ -145,11 +154,19 @@ class LLMModelDiscovery:
         if is_experimental:
             priority += self.priority_rules["experimental_penalty"]
 
-        # Apply specific model bonuses
-        for model_key, bonus in self.priority_rules.items():
-            if isinstance(bonus, int) and bonus < 0 and model_key in model_name:
-                priority += bonus
-                break
+        # Apply specific model bonuses - sort by length of key to apply most specific first
+        sorted_model_bonuses = sorted([
+            (k, v) for k, v in self.priority_rules.items()
+            if isinstance(v, int) and v < 0 and k in model_name
+        ], key=lambda item: len(item[0]), reverse=True)
+
+        for model_key, bonus in sorted_model_bonuses:
+            priority += bonus
+            break # Apply only the most specific bonus
+
+        for model_key, bonus in sorted_model_bonuses:
+            priority += bonus
+            break # Apply only the most specific bonus
 
         return priority
 
@@ -170,17 +187,14 @@ class LLMModelDiscovery:
         # Try to discover models
         output = self._run_llm_models_list()
         if output:
-            try:
-                models = self._parse_models_output(output)
-                filtered_models = self._filter_and_prioritize(models)
+            models = self._parse_models_output(output)
+            filtered_models = self._filter_and_prioritize(models)
 
-                # Update cache
-                self._cached_models = filtered_models
-                self._cache_timestamp = current_time
+            # Update cache
+            self._cached_models = filtered_models
+            self._cache_timestamp = current_time
 
-                return filtered_models
-            except Exception:
-                pass
+            return filtered_models
 
         # Return fallback models if discovery fails
         return self.fallback_models
@@ -253,6 +267,7 @@ class LLMModelDiscovery:
     def get_model_by_name(self, name: str) -> Optional[LLMModel]:
         """Find a model by name or alias."""
         models = self.discover_models()
+        self._log_debug(f"Searching for '{name}' in models: {[m.name for m in models]}")
 
         for model in models:
             if model.name == name or name in model.aliases:
@@ -292,7 +307,7 @@ class LLMModelDiscovery:
 class OpenGraphExtractor:
     """Extract OpenGraph metadata from URLs."""
 
-    def __init__(self, timeout: int = 30):
+    def __init__(self, timeout: int = settings.OG_EXTRACTOR_TIMEOUT):
         """Initialize with request timeout."""
         self.timeout = timeout
         self.session = requests.Session()
@@ -407,7 +422,7 @@ class LLMSummaryService:
 
     def _log_debug(self, message: str) -> None:
         """Log debug messages if debug mode is enabled."""
-        if self.config.debug:
+        if settings.LLM_DEBUG_MODE:
             print(f"🔧 DEBUG: {message}")
 
     def extract_youtube_id(self, url: str) -> Optional[str]:
