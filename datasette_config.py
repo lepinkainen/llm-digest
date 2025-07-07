@@ -66,7 +66,7 @@ def create_datasette_metadata():
                     "recent_summaries": {
                         "title": "Recent Summaries with URLs",
                         "sql": """
-                            SELECT 
+                            SELECT
                                 u.url,
                                 u.title,
                                 u.site_name,
@@ -83,7 +83,7 @@ def create_datasette_metadata():
                     "summary_by_model": {
                         "title": "Summaries by Model",
                         "sql": """
-                            SELECT 
+                            SELECT
                                 model_used,
                                 COUNT(*) as count,
                                 AVG(LENGTH(content)) as avg_length
@@ -95,7 +95,7 @@ def create_datasette_metadata():
                     "sites_summary": {
                         "title": "Summary by Site",
                         "sql": """
-                            SELECT 
+                            SELECT
                                 u.site_name,
                                 COUNT(DISTINCT u.id) as url_count,
                                 COUNT(s.id) as summary_count
@@ -109,7 +109,7 @@ def create_datasette_metadata():
                     "search_content": {
                         "title": "Search URLs and Summaries",
                         "sql": """
-                            SELECT 
+                            SELECT
                                 'URL' as type,
                                 u.id,
                                 u.url,
@@ -122,7 +122,7 @@ def create_datasette_metadata():
 
                             UNION ALL
 
-                            SELECT 
+                            SELECT
                                 'Summary' as type,
                                 s.id,
                                 u.url,
@@ -147,7 +147,7 @@ def create_datasette_metadata():
                         "title": "Summaries Over Time",
                         "database": "llm_digest",
                         "query": """
-                            SELECT 
+                            SELECT
                                 DATE(created_at) as date,
                                 COUNT(*) as count
                             FROM summaries
@@ -164,7 +164,7 @@ def create_datasette_metadata():
                         "title": "Model Usage Distribution",
                         "database": "llm_digest",
                         "query": """
-                            SELECT 
+                            SELECT
                                 model_used,
                                 COUNT(*) as count
                             FROM summaries

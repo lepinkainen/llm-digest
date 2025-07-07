@@ -221,7 +221,7 @@ class DatabaseManager:
         """Get recent URL entries with their latest summaries."""
         rows = self.conn.execute(
             """
-            SELECT 
+            SELECT
                 u.*,
                 s.id as summary_id,
                 s.content as summary_content,
@@ -232,7 +232,7 @@ class DatabaseManager:
             FROM urls u
             LEFT JOIN summaries s ON u.id = s.url_id
             WHERE s.id IN (
-                SELECT MAX(id) FROM summaries GROUP BY url_id
+                SELECTMAX(id) FROM summaries GROUP BY url_id
             ) OR s.id IS NULL
             ORDER BY u.created_at DESC
             LIMIT ?

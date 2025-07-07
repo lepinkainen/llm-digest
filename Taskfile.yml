@@ -8,7 +8,7 @@ tasks:
 
   test:
     cmds:
-      - .venv/bin/python -m pytest
+      - uv run python -m pytest --no-cov
 
   test-ci:
     cmds:
@@ -28,3 +28,7 @@ tasks:
     deps: [lint, test-ci]
     cmds:
       - echo "No CI build step required for this project."
+
+  run:
+    cmds:
+      - uv run python3 web_app.py

@@ -174,11 +174,11 @@ class LLMModelDiscovery:
             reverse=True,
         )
 
-        for model_key, bonus in sorted_model_bonuses:
+        for _model_key, bonus in sorted_model_bonuses:
             priority += bonus
             break  # Apply only the most specific bonus
 
-        for model_key, bonus in sorted_model_bonuses:
+        for _model_key, bonus in sorted_model_bonuses:
             priority += bonus
             break  # Apply only the most specific bonus
 

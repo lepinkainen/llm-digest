@@ -14,11 +14,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from database import DatabaseManager
-from services import LLMModelDiscovery, SummaryConfig, URLProcessor
-
 from config import settings
-
 from database import DatabaseManager
 from services import LLMModelDiscovery, SummaryConfig, URLProcessor
 
