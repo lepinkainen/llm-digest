@@ -30,6 +30,7 @@ classifiers = [
 # Core dependencies - managed by uv
 dependencies = [
     "llm>=0.13.0",
+    "llm-ollama>=0.3.0",
     "llm-fragments-reddit>=0.1.0",
     "llm-hacker-news>=0.1.0", 
     "llm-fragments-youtube>=0.1.0",

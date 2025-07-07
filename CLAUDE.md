@@ -154,6 +154,82 @@ The application requires:
 - For web deployment: FastAPI and Uvicorn
 - For data analysis: Datasette with the generated database
 
+## Ollama Setup (Local LLM Backend)
+
+This project is configured to use Ollama as the default LLM backend for local inference. To set up Ollama:
+
+### 1. Install Ollama
+
+```bash
+# macOS
+brew install ollama
+
+# Or download from https://ollama.ai/download
+```
+
+### 2. Start Ollama Service
+
+```bash
+# Start the Ollama service
+ollama serve
+```
+
+### 3. Install Required Models
+
+```bash
+# Install the default model (llama3.2)
+ollama pull llama3.2
+
+# Optional: Install other recommended models
+ollama pull llama3.1
+ollama pull mistral
+ollama pull codellama
+```
+
+### 4. Configure llm-ollama Plugin
+
+```bash
+# Install the llm-ollama plugin (already included in dependencies)
+uv sync
+
+# Register Ollama models with llm CLI
+llm install llm-ollama
+```
+
+### 5. Test the Setup
+
+```bash
+# Test Ollama connectivity
+ollama list
+
+# Test llm CLI with Ollama
+llm -m llama3.2 "Hello, world!"
+
+# Test the URL summarizer
+uv run python claude-llm.py "https://reddit.com/r/python/comments/example/"
+```
+
+### Configuration
+
+The application uses these Ollama-related settings in `config.py`:
+
+- `LLM_DEFAULT_MODEL`: Default model name (set to "llama3.2")
+- `OLLAMA_BASE_URL`: Ollama server URL (default: "http://localhost:11434")
+
+You can override these settings using environment variables:
+
+```bash
+export LLM_DEFAULT_MODEL="mistral"
+export OLLAMA_BASE_URL="http://localhost:11434"
+```
+
+### Troubleshooting
+
+- **Ollama not found**: Ensure Ollama is installed and running (`ollama serve`)
+- **Model not available**: Pull the model first (`ollama pull llama3.2`)
+- **Connection refused**: Check if Ollama is running on port 11434
+- **Fragment compatibility**: All existing fragments work with Ollama models
+
 ## Data Storage
 
 - **SQLite Database**: `llm_digest.db` with FTS5 full-text search

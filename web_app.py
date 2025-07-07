@@ -22,7 +22,7 @@ from services import LLMModelDiscovery, SummaryConfig, URLProcessor
 app = FastAPI(
     title="LLM Digest",
     description="Web interface for URL summarization using LLM fragments",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Initialize services
@@ -50,11 +50,10 @@ async def home(request: Request) -> Any:
     recent_entries = db.get_recent_entries(limit=20)
     stats = db.get_stats()
 
-    return templates.TemplateResponse("index.html", {
-        "request": request,
-        "recent_entries": recent_entries,
-        "stats": stats
-    })
+    return templates.TemplateResponse(
+        "index.html",
+        {"request": request, "recent_entries": recent_entries, "stats": stats},
+    )
 
 
 @app.post("/submit")
@@ -62,7 +61,7 @@ async def submit_url(
     request: Request,
     url: str = Form(...),
     model: str = Form("gpt-4"),
-    format_type: str = Form("bullet")
+    format_type: str = Form("bullet"),
 ) -> Any:
     """Submit URL for processing."""
     # Validate URL
@@ -80,7 +79,7 @@ async def submit_url(
     config = SummaryConfig(
         model=model if model != "default" else settings.LLM_DEFAULT_MODEL,
         format=format_type if format_type != "default" else settings.LLM_DEFAULT_FORMAT,
-        debug=settings.LLM_DEBUG_MODE
+        debug=settings.LLM_DEBUG_MODE,
     )
 
     # Create processor with custom config
@@ -94,7 +93,9 @@ async def submit_url(
         url_id = db.insert_url(url_record)
 
         if url_id is None:
-            raise HTTPException(status_code=500, detail="Failed to save URL to database")
+            raise HTTPException(
+                status_code=500, detail="Failed to save URL to database"
+            )
 
         if summary_record:
             summary_record.url_id = url_id
@@ -104,7 +105,9 @@ async def submit_url(
         return RedirectResponse(url=f"/results/{url_id}", status_code=303)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Processing failed: {str(e)}"
+        ) from e
 
 
 @app.get("/results/{url_id}", response_class=HTMLResponse)
@@ -116,18 +119,17 @@ async def view_results(request: Request, url_id: int) -> Any:
 
     summaries = db.get_summaries_for_url(url_id)
 
-    return templates.TemplateResponse("results.html", {
-        "request": request,
-        "url_record": url_record,
-        "summaries": summaries
-    })
+    return templates.TemplateResponse(
+        "results.html",
+        {"request": request, "url_record": url_record, "summaries": summaries},
+    )
 
 
 @app.get("/search", response_class=HTMLResponse)
 async def search(
     request: Request,
     q: Optional[str] = Query(None),
-    type: str = Query("all")  # all, urls, summaries
+    type: str = Query("all"),  # all, urls, summaries
 ) -> Any:
     """Search interface and results."""
     results: list[dict[str, Any]] | dict[str, list[dict[str, Any]]] = []
@@ -140,17 +142,12 @@ async def search(
         else:  # all
             url_results = db.search_urls(q)
             summary_results = db.search_summaries(q)
-            results = {
-                "urls": url_results,
-                "summaries": summary_results
-            }
+            results = {"urls": url_results, "summaries": summary_results}
 
-    return templates.TemplateResponse("search.html", {
-        "request": request,
-        "query": q,
-        "search_type": type,
-        "results": results
-    })
+    return templates.TemplateResponse(
+        "search.html",
+        {"request": request, "query": q, "search_type": type, "results": results},
+    )
 
 
 @app.get("/api/stats")
@@ -172,7 +169,9 @@ async def search_urls_api(q: str = Query(...), limit: int = Query(50, le=100)) -
 
 
 @app.get("/api/search/summaries")
-async def search_summaries_api(q: str = Query(...), limit: int = Query(50, le=100)) -> Any:
+async def search_summaries_api(
+    q: str = Query(...), limit: int = Query(50, le=100)
+) -> Any:
     """API endpoint for summary search."""
     return db.search_summaries(q, limit)
 
@@ -188,7 +187,7 @@ async def get_models() -> Any:
                     "name": model.name,
                     "provider": model.provider,
                     "aliases": model.aliases,
-                    "display_name": model.aliases[0] if model.aliases else model.name
+                    "display_name": model.aliases[0] if model.aliases else model.name,
                 }
                 for model in models
             ]
@@ -198,10 +197,30 @@ async def get_models() -> Any:
         # Return fallback models if discovery fails
         return {
             "models": [
-                {"name": "gpt-4o", "provider": "OpenAI Chat", "aliases": ["4o"], "display_name": "4o"},
-                {"name": "gpt-4o-mini", "provider": "OpenAI Chat", "aliases": ["4o-mini"], "display_name": "4o-mini"},
-                {"name": "gpt-4", "provider": "OpenAI Chat", "aliases": ["4", "gpt4"], "display_name": "4"},
-                {"name": "gpt-3.5-turbo", "provider": "OpenAI Chat", "aliases": ["3.5", "chatgpt"], "display_name": "3.5"},
+                {
+                    "name": "gpt-4o",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4o"],
+                    "display_name": "4o",
+                },
+                {
+                    "name": "gpt-4o-mini",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4o-mini"],
+                    "display_name": "4o-mini",
+                },
+                {
+                    "name": "gpt-4",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4", "gpt4"],
+                    "display_name": "4",
+                },
+                {
+                    "name": "gpt-3.5-turbo",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["3.5", "chatgpt"],
+                    "display_name": "3.5",
+                },
             ]
         }
 
@@ -219,7 +238,7 @@ async def get_models_by_category() -> Any:
                     "name": model.name,
                     "provider": model.provider,
                     "aliases": model.aliases,
-                    "display_name": model.aliases[0] if model.aliases else model.name
+                    "display_name": model.aliases[0] if model.aliases else model.name,
                 }
                 for model in models
             ]
@@ -229,18 +248,35 @@ async def get_models_by_category() -> Any:
         # Return fallback categorized models
         return {
             "recommended": [
-                {"name": "gpt-4o", "provider": "OpenAI Chat", "aliases": ["4o"], "display_name": "4o"},
-                {"name": "gpt-4", "provider": "OpenAI Chat", "aliases": ["4"], "display_name": "4"},
+                {
+                    "name": "gpt-4o",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4o"],
+                    "display_name": "4o",
+                },
+                {
+                    "name": "gpt-4",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4"],
+                    "display_name": "4",
+                },
             ],
             "budget": [
-                {"name": "gpt-4o-mini", "provider": "OpenAI Chat", "aliases": ["4o-mini"], "display_name": "4o-mini"},
-                {"name": "gpt-3.5-turbo", "provider": "OpenAI Chat", "aliases": ["3.5"], "display_name": "3.5"},
+                {
+                    "name": "gpt-4o-mini",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["4o-mini"],
+                    "display_name": "4o-mini",
+                },
+                {
+                    "name": "gpt-3.5-turbo",
+                    "provider": "OpenAI Chat",
+                    "aliases": ["3.5"],
+                    "display_name": "3.5",
+                },
             ],
-            "alternative": []
+            "alternative": [],
         }
-
-
-
 
 
 @app.get("/datasette")
@@ -266,7 +302,7 @@ def main() -> None:
         "web_app:app",
         host=settings.WEB_APP_HOST,
         port=settings.WEB_APP_PORT,
-        reload=settings.WEB_APP_RELOAD
+        reload=settings.WEB_APP_RELOAD,
     )
 
 

@@ -84,7 +84,7 @@ class URLSummarizer:
             "detailed": "Provide an in-depth analysis and summary including: key points and arguments, relevant context and background, implications and significance, notable discussions or perspectives, and any actionable insights or takeaways. Structure your response to be thorough and informative.",
             "key-points": "Extract and present the most critical information as key points, focusing on facts, conclusions, and important details that someone would need to know. Prioritize accuracy and completeness over brevity.",
             "discussion": "Summarize the main discussion points, different perspectives presented, notable arguments or debates, and the overall sentiment or consensus if applicable. Include context about why this topic is significant.",
-            "technical": "Provide a technical summary focusing on: specific details, methodologies, technical concepts, implementation details, and practical implications. Include relevant technical context and any limitations or considerations mentioned."
+            "technical": "Provide a technical summary focusing on: specific details, methodologies, technical concepts, implementation details, and practical implications. Include relevant technical context and any limitations or considerations mentioned.",
         }
 
         # Platform-specific prompt enhancements
@@ -106,7 +106,7 @@ class URLSummarizer:
                 "paragraph": "Provide a comprehensive summary of this YouTube video content. Include the main topics discussed, key information and insights presented, practical advice or demonstrations, and the overall value or significance of the content for viewers.",
                 "detailed": "Provide an in-depth analysis of this YouTube video including: main topics and themes, detailed content breakdown, key insights and conclusions, practical advice or tutorials, demonstrations or examples shown, and the overall educational or entertainment value.",
                 "technical": "Focus on any technical content: specific concepts explained, methodologies demonstrated, technical details provided, practical implementations shown, and technical insights or advice given.",
-            }
+            },
         }
 
         # Validate llm installation
@@ -476,7 +476,14 @@ Examples:
     parser.add_argument(
         "--format",
         "-f",
-        choices=["bullet", "paragraph", "detailed", "key-points", "discussion", "technical"],
+        choices=[
+            "bullet",
+            "paragraph",
+            "detailed",
+            "key-points",
+            "discussion",
+            "technical",
+        ],
         default="bullet",
         help="Output format (default: bullet)",
     )

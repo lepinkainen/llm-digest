@@ -61,7 +61,8 @@ class DatabaseManager:
     def init_database(self) -> None:
         """Initialize database schema with FTS5 search tables."""
         # URLs table for OpenGraph data
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS urls (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url TEXT UNIQUE NOT NULL,
@@ -72,10 +73,12 @@ class DatabaseManager:
                 og_type TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
-        """)
+        """
+        )
 
         # Summaries table for LLM output
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS summaries (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 url_id INTEGER NOT NULL,
@@ -86,72 +89,89 @@ class DatabaseManager:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (url_id) REFERENCES urls (id) ON DELETE CASCADE
             )
-        """)
+        """
+        )
 
         # FTS5 virtual table for URL search
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE VIRTUAL TABLE IF NOT EXISTS urls_fts USING fts5(
                 url, title, description, site_name,
                 content='urls',
                 content_rowid='id'
             )
-        """)
+        """
+        )
 
         # FTS5 virtual table for summary search
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE VIRTUAL TABLE IF NOT EXISTS summaries_fts USING fts5(
                 content, model_used, format_type,
                 content='summaries',
                 content_rowid='id'
             )
-        """)
+        """
+        )
 
         # Triggers to keep FTS5 tables in sync
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS urls_fts_insert AFTER INSERT ON urls BEGIN
                 INSERT INTO urls_fts(rowid, url, title, description, site_name)
                 VALUES (new.id, new.url, new.title, new.description, new.site_name);
             END
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS urls_fts_delete AFTER DELETE ON urls BEGIN
                 INSERT INTO urls_fts(urls_fts, rowid, url, title, description, site_name)
                 VALUES ('delete', old.id, old.url, old.title, old.description, old.site_name);
             END
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS urls_fts_update AFTER UPDATE ON urls BEGIN
                 INSERT INTO urls_fts(urls_fts, rowid, url, title, description, site_name)
                 VALUES ('delete', old.id, old.url, old.title, old.description, old.site_name);
                 INSERT INTO urls_fts(rowid, url, title, description, site_name)
                 VALUES (new.id, new.url, new.title, new.description, new.site_name);
             END
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS summaries_fts_insert AFTER INSERT ON summaries BEGIN
                 INSERT INTO summaries_fts(rowid, content, model_used, format_type)
                 VALUES (new.id, new.content, new.model_used, new.format_type);
             END
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS summaries_fts_delete AFTER DELETE ON summaries BEGIN
                 INSERT INTO summaries_fts(summaries_fts, rowid, content, model_used, format_type)
                 VALUES ('delete', old.id, old.content, old.model_used, old.format_type);
             END
-        """)
+        """
+        )
 
-        self.conn.execute("""
+        self.conn.execute(
+            """
             CREATE TRIGGER IF NOT EXISTS summaries_fts_update AFTER UPDATE ON summaries BEGIN
                 INSERT INTO summaries_fts(summaries_fts, rowid, content, model_used, format_type)
                 VALUES ('delete', old.id, old.content, old.model_used, old.format_type);
                 INSERT INTO summaries_fts(rowid, content, model_used, format_type)
                 VALUES (new.id, new.content, new.model_used, new.format_type);
             END
-        """)
+        """
+        )
 
         self.conn.commit()
 

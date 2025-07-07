@@ -51,17 +51,26 @@ class LLMModelDiscovery:
 
         # Fallback models if discovery fails
         self.fallback_models = [
-            LLMModel("gpt-4o", "OpenAI Chat", ["4o"], True, False, 1),
-            LLMModel("gpt-4o-mini", "OpenAI Chat", ["4o-mini"], True, False, 2),
-            LLMModel("gpt-4", "OpenAI Chat", ["4", "gpt4"], True, False, 3),
+            # Local Ollama models (highest priority)
             LLMModel(
-                "gpt-3.5-turbo", "OpenAI Chat", ["3.5", "chatgpt"], True, False, 4
+                "llama3.2", "Ollama", ["llama3.2-3b", "llama3.2:latest"], True, False, 1
+            ),
+            LLMModel("llama3.1", "Ollama", ["llama3.1:latest"], True, False, 2),
+            LLMModel("mistral", "Ollama", ["mistral:latest"], True, False, 3),
+            LLMModel("codellama", "Ollama", ["codellama:latest"], True, False, 4),
+            # OpenAI models as fallback
+            LLMModel("gpt-4o", "OpenAI Chat", ["4o"], True, False, 10),
+            LLMModel("gpt-4o-mini", "OpenAI Chat", ["4o-mini"], True, False, 11),
+            LLMModel("gpt-4", "OpenAI Chat", ["4", "gpt4"], True, False, 12),
+            LLMModel(
+                "gpt-3.5-turbo", "OpenAI Chat", ["3.5", "chatgpt"], True, False, 13
             ),
         ]
 
         # Model prioritization rules
         self.priority_rules = {
             # Provider preferences (lower = higher priority)
+            "Ollama": 5,  # Ollama models get highest priority for local inference
             "OpenAI Chat": 10,
             "GeminiPro": 20,
             "OpenAI Completion": 30,
@@ -69,6 +78,13 @@ class LLMModelDiscovery:
             "chat_bonus": -5,  # Chat models are preferred
             "experimental_penalty": 50,  # Experimental models get lower priority
             # Specific model bonuses (applied to base priority)
+            # Ollama models
+            "llama3.2": -15,  # Highest priority for local inference
+            "llama3.1": -12,
+            "mistral": -10,
+            "codellama": -8,
+            "llama2": -6,
+            # OpenAI models
             "gpt-4o": -10,
             "gpt-4o-mini": -8,
             "gpt-4": -6,
@@ -263,18 +279,25 @@ class LLMModelDiscovery:
         """Get models organized by category for better user experience."""
         all_models = self.discover_models()
 
-        categories: dict[str, list[LLMModel]] = {"recommended": [], "budget": [], "alternative": []}
+        categories: dict[str, list[LLMModel]] = {
+            "recommended": [],
+            "budget": [],
+            "alternative": [],
+        }
 
         # Categorize models
         for model in all_models:
+            # Local Ollama models get highest priority in recommended
+            if model.provider == "Ollama":
+                categories["recommended"].append(model)
             # Budget models (fast and cost-effective)
-            if any(
+            elif any(
                 keyword in model.name.lower()
                 for keyword in ["mini", "3.5", "flash-8b", "nano"]
             ):
                 categories["budget"].append(model)
-            # Alternative providers (non-OpenAI)
-            elif not model.provider.startswith("OpenAI"):
+            # Alternative providers (non-OpenAI, non-Ollama)
+            elif not model.provider.startswith("OpenAI") and model.provider != "Ollama":
                 categories["alternative"].append(model)
             # Everything else goes to recommended
             else:
@@ -369,7 +392,7 @@ class OpenGraphExtractor:
 
             if not record.description:
                 desc_tag = soup.find("meta", attrs={"name": "description"})
-                if desc_tag and hasattr(desc_tag, 'get'):
+                if desc_tag and hasattr(desc_tag, "get"):
                     content = desc_tag.get("content")
                     if content:
                         record.description = str(content).strip()
@@ -386,14 +409,14 @@ class OpenGraphExtractor:
         """Get content from meta tag by property or name."""
         # Try OpenGraph property first
         tag = soup.find("meta", property=property_name)
-        if tag and hasattr(tag, 'get'):
+        if tag and hasattr(tag, "get"):
             content = tag.get("content")
             if content:
                 return str(content).strip()
 
         # Try name attribute
         tag = soup.find("meta", attrs={"name": property_name})
-        if tag and hasattr(tag, 'get'):
+        if tag and hasattr(tag, "get"):
             content = tag.get("content")
             if content:
                 return str(content).strip()
@@ -403,7 +426,7 @@ class OpenGraphExtractor:
     def _get_title(self, soup: BeautifulSoup) -> Optional[str]:
         """Get page title from title tag."""
         title_tag = soup.find("title")
-        if title_tag and hasattr(title_tag, 'get_text'):
+        if title_tag and hasattr(title_tag, "get_text"):
             return str(title_tag.get_text()).strip()
         return None
 

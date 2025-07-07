@@ -8,10 +8,13 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "llm_digest.db"
 
     # LLM settings
-    LLM_DEFAULT_MODEL: str = "gpt-4o-mini"
+    LLM_DEFAULT_MODEL: str = "llama3.2:3b"
     LLM_DEFAULT_FORMAT: str = "bullet"
     LLM_TIMEOUT: int = 120
     LLM_DEBUG_MODE: bool = False
+
+    # Ollama settings
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
     # OpenGraph settings
     OG_EXTRACTOR_TIMEOUT: int = 30
