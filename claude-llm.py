@@ -79,9 +79,34 @@ class URLSummarizer:
 
         # System prompts for different formats
         self.system_prompts = {
-            "bullet": "Summarize this content concisely in 3-5 bullet points.",
-            "paragraph": "Provide a concise paragraph summary of this content.",
-            "detailed": "Provide a detailed summary including key points, context, and implications.",
+            "bullet": "Summarize this content in clear, comprehensive bullet points. Focus on the most important information, key arguments, and actionable insights. Include as many points as necessary to capture the essential content - don't limit yourself to a specific number.",
+            "paragraph": "Provide a comprehensive paragraph summary that covers the main points, context, and significance of this content. Include relevant details that would help someone understand the full scope and implications of the information presented.",
+            "detailed": "Provide an in-depth analysis and summary including: key points and arguments, relevant context and background, implications and significance, notable discussions or perspectives, and any actionable insights or takeaways. Structure your response to be thorough and informative.",
+            "key-points": "Extract and present the most critical information as key points, focusing on facts, conclusions, and important details that someone would need to know. Prioritize accuracy and completeness over brevity.",
+            "discussion": "Summarize the main discussion points, different perspectives presented, notable arguments or debates, and the overall sentiment or consensus if applicable. Include context about why this topic is significant.",
+            "technical": "Provide a technical summary focusing on: specific details, methodologies, technical concepts, implementation details, and practical implications. Include relevant technical context and any limitations or considerations mentioned."
+        }
+
+        # Platform-specific prompt enhancements
+        self.platform_prompts = {
+            "reddit": {
+                "bullet": "Summarize this Reddit post and discussion in comprehensive bullet points. Include: the main post content, top discussion points from comments, different perspectives or arguments presented, community sentiment, and any notable insights or conclusions. Capture the full scope of the discussion.",
+                "paragraph": "Provide a comprehensive summary of this Reddit post and its discussion. Include the main post content, key discussion points from comments, different viewpoints presented, community reaction, and the overall significance or conclusions drawn from the conversation.",
+                "detailed": "Provide an in-depth analysis of this Reddit post and discussion including: the original post content and context, major discussion themes and arguments, different perspectives and viewpoints, community sentiment and reactions, notable insights or expert opinions, and any actionable takeaways or conclusions.",
+                "discussion": "Focus on the Reddit discussion dynamics: main arguments and counterarguments, different user perspectives, community consensus or disagreements, notable expert contributions, and the overall direction and quality of the conversation.",
+            },
+            "hackernews": {
+                "bullet": "Summarize this Hacker News post and discussion in comprehensive bullet points. Include: the main article/post content, key technical discussions, business implications, community insights, expert opinions, and practical takeaways. Focus on the technical and professional aspects.",
+                "paragraph": "Provide a comprehensive summary of this Hacker News post and discussion. Include the main content, key technical points discussed, business or industry implications, notable expert opinions, and practical insights that would be valuable to developers or professionals.",
+                "detailed": "Provide an in-depth analysis of this Hacker News post and discussion including: the original content and context, technical details and implications, business or industry significance, expert opinions and insights, practical applications or takeaways, and any concerns or limitations discussed.",
+                "technical": "Focus on the technical aspects: specific technologies, methodologies, implementation details, performance considerations, technical challenges or solutions discussed, and practical implications for developers or engineers.",
+            },
+            "youtube": {
+                "bullet": "Summarize this YouTube video content in comprehensive bullet points. Include: main topics covered, key information presented, important insights or conclusions, practical advice or takeaways, and any notable demonstrations or examples. Capture the full educational or entertainment value.",
+                "paragraph": "Provide a comprehensive summary of this YouTube video content. Include the main topics discussed, key information and insights presented, practical advice or demonstrations, and the overall value or significance of the content for viewers.",
+                "detailed": "Provide an in-depth analysis of this YouTube video including: main topics and themes, detailed content breakdown, key insights and conclusions, practical advice or tutorials, demonstrations or examples shown, and the overall educational or entertainment value.",
+                "technical": "Focus on any technical content: specific concepts explained, methodologies demonstrated, technical details provided, practical implementations shown, and technical insights or advice given.",
+            }
         }
 
         # Validate llm installation
@@ -267,10 +292,18 @@ class URLSummarizer:
             self._log_debug(f"Error parsing URL: {e}")
             return None
 
-    def get_system_prompt(self) -> str:
-        """Get the appropriate system prompt based on configuration."""
+    def get_system_prompt(self, platform: Optional[str] = None) -> str:
+        """Get the appropriate system prompt based on configuration and platform."""
         if self.config.system_prompt:
             return self.config.system_prompt
+
+        # Use platform-specific prompts if available
+        if platform and platform in self.platform_prompts:
+            platform_prompts = self.platform_prompts[platform]
+            if self.config.format in platform_prompts:
+                return platform_prompts[self.config.format]
+
+        # Fallback to general prompts
         return self.system_prompts.get(
             self.config.format, self.system_prompts["bullet"]
         )
@@ -295,6 +328,15 @@ class URLSummarizer:
         print(f"📦 Using fragment: {fragment_name}")
         print(f"🔄 Processing URL with format: {self.config.format}")
 
+        # Determine platform for prompt selection
+        platform = None
+        if "reddit" in fragment_name:
+            platform = "reddit"
+        elif "hacker-news" in fragment_name:
+            platform = "hackernews"
+        elif "youtube" in fragment_name:
+            platform = "youtube"
+
         try:
             # Build command with comprehensive options
             cmd = [
@@ -304,7 +346,7 @@ class URLSummarizer:
                 "-f",
                 fragment_identifier,
                 "--system",
-                self.get_system_prompt(),
+                self.get_system_prompt(platform),
             ]
 
             self._log_debug(f"Running command: {' '.join(cmd)}")
@@ -434,7 +476,7 @@ Examples:
     parser.add_argument(
         "--format",
         "-f",
-        choices=["bullet", "paragraph", "detailed"],
+        choices=["bullet", "paragraph", "detailed", "key-points", "discussion", "technical"],
         default="bullet",
         help="Output format (default: bullet)",
     )

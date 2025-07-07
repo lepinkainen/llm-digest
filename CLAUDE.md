@@ -46,6 +46,7 @@ pytest --cov=enhanced_url_summarizer --cov-report=html
 ### Running the Application
 
 #### CLI Tool
+
 ```bash
 # Interactive mode
 python claude-llm.py
@@ -61,6 +62,7 @@ python claude-llm.py --debug "https://youtube.com/watch?v=abc123"
 ```
 
 #### Web Application
+
 ```bash
 # Start the web server
 python web_app.py
@@ -72,6 +74,7 @@ python web_app.py --host 0.0.0.0 --port 8080 --reload
 ```
 
 #### Data Analysis
+
 ```bash
 # Generate Datasette configuration
 python datasette_config.py
@@ -87,25 +90,30 @@ python datasette_config.py
 ### Core Components
 
 #### CLI Tool (`claude-llm.py`)
+
 - **URLSummarizer class**: Original CLI logic with URL detection, fragment mapping, and LLM interaction
 - **SummaryConfig dataclass**: Configuration management for models, formats, timeouts, and debug settings
 
 #### Web Application (`web_app.py`)
+
 - **FastAPI application**: Web interface with form submission and results display
 - **URL processor service**: Combines OpenGraph extraction with LLM summarization
 - **Database integration**: SQLite storage with FTS5 full-text search
 
 #### Services (`services.py`)
+
 - **OpenGraphExtractor**: Extracts metadata from web pages using BeautifulSoup
 - **LLMSummaryService**: Refactored summarization logic using LLM fragments
 - **URLProcessor**: High-level service combining extraction and summarization
 
 #### Database (`database.py`)
+
 - **DatabaseManager**: SQLite operations with FTS5 search capabilities
 - **URLRecord/SummaryRecord**: Data models for URL metadata and summaries
 - **FTS5 integration**: Full-text search on URLs and summary content
 
 #### Fragment Mappings
+
 - `reddit.com` → `llm-fragments-reddit`
 - `news.ycombinator.com` → `llm-hacker-news`
 - `youtube.com`/`youtu.be` → `llm-fragments-youtube`
@@ -140,6 +148,7 @@ The application uses `pyproject.toml` for comprehensive configuration including:
 ## External Dependencies
 
 The application requires:
+
 - `llm` CLI tool installed and configured with API keys for the chosen model provider (OpenAI, etc.)
 - LLM fragment packages for supported sites
 - For web deployment: FastAPI and Uvicorn
@@ -154,3 +163,4 @@ The application requires:
 ## Memories
 
 - Read @llm-shared/project_tech_stack.md for information about technology choices in the project
+- Always use `uv run python3` when running python files
