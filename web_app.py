@@ -279,6 +279,16 @@ async def get_models_by_category() -> Any:
         }
 
 
+@app.delete("/api/urls/{url_id}")
+async def delete_url(url_id: int) -> Any:
+    """Delete a URL and its associated summaries."""
+    success = db.delete_url(url_id)
+    if success:
+        return {"message": "URL deleted successfully"}
+    else:
+        raise HTTPException(status_code=404, detail="URL not found")
+
+
 @app.get("/datasette")
 async def datasette_redirect() -> Any:
     """Redirect to Datasette instance."""

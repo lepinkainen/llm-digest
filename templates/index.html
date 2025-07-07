@@ -74,16 +74,26 @@
             {% for entry in recent_entries %}
             <div class="entry-card">
                 <div class="entry-header">
-                    <h3>
-                        <a href="/results/{{ entry.id }}" class="entry-title">
-                            {{ entry.title or entry.url[:60] + "..." if entry.url|length > 60 else entry.url }}
-                        </a>
-                    </h3>
-                    <div class="entry-meta">
-                        {% if entry.site_name %}
-                        <span class="site-name">{{ entry.site_name }}</span>
-                        {% endif %}
-                        <span class="timestamp">{{ entry.created_at }}</span>
+                    {% if entry.image %}
+                    <div class="entry-image">
+                        <img src="{{ entry.image }}" alt="Preview" class="entry-preview-image">
+                    </div>
+                    {% endif %}
+                    <div class="entry-content">
+                        <h3>
+                            <a href="/results/{{ entry.id }}" class="entry-title">
+                                {{ entry.title or "Untitled" }}
+                            </a>
+                        </h3>
+                        <div class="entry-meta">
+                            {% if entry.site_name %}
+                            <span class="site-name">{{ entry.site_name }}</span>
+                            {% endif %}
+                            <span class="timestamp">{{ entry.created_at }}</span>
+                        </div>
+                        <div class="entry-url">
+                            <small><a href="{{ entry.url }}" target="_blank" class="external-link">{{ entry.url[:60] + "..." if entry.url|length > 60 else entry.url }}</a></small>
+                        </div>
                     </div>
                 </div>
                 
@@ -99,12 +109,17 @@
                 {% endif %}
                 
                 <div class="entry-footer">
-                    {% if entry.model_used %}
-                    <span class="model-badge">{{ entry.model_used }}</span>
-                    {% endif %}
-                    {% if entry.format_type %}
-                    <span class="format-badge">{{ entry.format_type }}</span>
-                    {% endif %}
+                    <div class="entry-badges">
+                        {% if entry.model_used %}
+                        <span class="model-badge">{{ entry.model_used }}</span>
+                        {% endif %}
+                        {% if entry.format_type %}
+                        <span class="format-badge">{{ entry.format_type }}</span>
+                        {% endif %}
+                    </div>
+                    <button class="delete-btn" onclick="deleteEntry({{ entry.id }})" title="Delete this summary">
+                        🗑️
+                    </button>
                 </div>
             </div>
             {% endfor %}
@@ -152,6 +167,30 @@ function loadModels() {
                 <option value="gpt-3.5-turbo">3.5 (OpenAI Chat)</option>
             `;
         });
+}
+
+function deleteEntry(entryId) {
+    if (confirm('Are you sure you want to delete this summary? This action cannot be undone.')) {
+        fetch(`/api/urls/${entryId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                // Remove the entry from the DOM
+                const entryCard = document.querySelector(`[onclick="deleteEntry(${entryId})"]`).closest('.entry-card');
+                entryCard.remove();
+                
+                // Update stats if needed
+                location.reload();
+            } else {
+                alert('Failed to delete the entry. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting entry:', error);
+            alert('An error occurred while deleting the entry.');
+        });
+    }
 }
 </script>
 {% endblock %}

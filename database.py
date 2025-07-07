@@ -303,3 +303,13 @@ class DatabaseManager:
         ]
 
         return {"url_count": url_count, "summary_count": summary_count}
+
+    def delete_url(self, url_id: int) -> bool:
+        """Delete URL and all associated summaries."""
+        try:
+            # The CASCADE constraint will automatically delete associated summaries
+            cursor = self.conn.execute("DELETE FROM urls WHERE id = ?", (url_id,))
+            self.conn.commit()
+            return cursor.rowcount > 0
+        except Exception:
+            return False

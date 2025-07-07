@@ -392,7 +392,7 @@ class OpenGraphExtractor:
 
             if not record.description:
                 desc_tag = soup.find("meta", attrs={"name": "description"})
-                if desc_tag and hasattr(desc_tag, "get"):
+                if desc_tag and hasattr(desc_tag, "get") and desc_tag.name:
                     content = desc_tag.get("content")
                     if content:
                         record.description = str(content).strip()
@@ -409,14 +409,14 @@ class OpenGraphExtractor:
         """Get content from meta tag by property or name."""
         # Try OpenGraph property first
         tag = soup.find("meta", property=property_name)
-        if tag and hasattr(tag, "get"):
+        if tag and hasattr(tag, "get") and tag.name:
             content = tag.get("content")
             if content:
                 return str(content).strip()
 
         # Try name attribute
         tag = soup.find("meta", attrs={"name": property_name})
-        if tag and hasattr(tag, "get"):
+        if tag and hasattr(tag, "get") and tag.name:
             content = tag.get("content")
             if content:
                 return str(content).strip()
@@ -714,6 +714,6 @@ class URLProcessor:
         url_record = self.og_extractor.extract(url)
 
         # Generate summary
-        success, summary_record, error_msg = self.summary_service.generate_summary(url)
+        _, summary_record, error_msg = self.summary_service.generate_summary(url)
 
         return url_record, summary_record, error_msg
