@@ -232,7 +232,7 @@ class DatabaseManager:
             FROM urls u
             LEFT JOIN summaries s ON u.id = s.url_id
             WHERE s.id IN (
-                SELECTMAX(id) FROM summaries GROUP BY url_id
+                SELECT MAX(id) FROM summaries GROUP BY url_id
             ) OR s.id IS NULL
             ORDER BY u.created_at DESC
             LIMIT ?
