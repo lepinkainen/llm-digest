@@ -47,7 +47,7 @@ class LLMModelDiscovery:
         """Initialize with cache timeout in seconds."""
         self.cache_timeout = cache_timeout
         self._cached_models: Optional[list[LLMModel]] = None
-        self._cache_timestamp = 0
+        self._cache_timestamp = 0.0
 
         # Fallback models if discovery fails
         self.fallback_models = [
@@ -263,7 +263,7 @@ class LLMModelDiscovery:
         """Get models organized by category for better user experience."""
         all_models = self.discover_models()
 
-        categories = {"recommended": [], "budget": [], "alternative": []}
+        categories: dict[str, list[LLMModel]] = {"recommended": [], "budget": [], "alternative": []}
 
         # Categorize models
         for model in all_models:
@@ -369,8 +369,10 @@ class OpenGraphExtractor:
 
             if not record.description:
                 desc_tag = soup.find("meta", attrs={"name": "description"})
-                if desc_tag:
-                    record.description = desc_tag.get("content", "").strip()
+                if desc_tag and hasattr(desc_tag, 'get'):
+                    content = desc_tag.get("content")
+                    if content:
+                        record.description = str(content).strip()
 
         except Exception as e:
             print(f"🔧 DEBUG: Failed to extract OpenGraph data from {url}: {e}")
@@ -384,21 +386,25 @@ class OpenGraphExtractor:
         """Get content from meta tag by property or name."""
         # Try OpenGraph property first
         tag = soup.find("meta", property=property_name)
-        if tag and tag.get("content"):
-            return tag["content"].strip()
+        if tag and hasattr(tag, 'get'):
+            content = tag.get("content")
+            if content:
+                return str(content).strip()
 
         # Try name attribute
         tag = soup.find("meta", attrs={"name": property_name})
-        if tag and tag.get("content"):
-            return tag["content"].strip()
+        if tag and hasattr(tag, 'get'):
+            content = tag.get("content")
+            if content:
+                return str(content).strip()
 
         return None
 
     def _get_title(self, soup: BeautifulSoup) -> Optional[str]:
         """Get page title from title tag."""
         title_tag = soup.find("title")
-        if title_tag:
-            return title_tag.get_text().strip()
+        if title_tag and hasattr(title_tag, 'get_text'):
+            return str(title_tag.get_text()).strip()
         return None
 
 

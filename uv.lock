@@ -336,6 +336,7 @@ all = [
     { name = "pytest-mock" },
     { name = "responses" },
     { name = "ruff" },
+    { name = "types-beautifulsoup4" },
     { name = "types-requests" },
 ]
 dev = [
@@ -346,6 +347,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "ruff" },
+    { name = "types-beautifulsoup4" },
     { name = "types-requests" },
 ]
 docs = [
@@ -419,6 +421,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.31.0" },
     { name = "responses", marker = "extra == 'test'", specifier = ">=0.23.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.0.285" },
+    { name = "types-beautifulsoup4", marker = "extra == 'dev'", specifier = ">=4.12.0" },
     { name = "types-requests", marker = "extra == 'dev'", specifier = ">=2.31.0" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.24.0" },
 ]

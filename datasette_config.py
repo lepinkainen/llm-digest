@@ -6,9 +6,10 @@ Provides optimized views and search configuration for data analysis.
 
 import json
 from pathlib import Path
+from typing import Any
 
 
-def create_datasette_metadata():
+def create_datasette_metadata() -> dict[str, Any]:
     """Create metadata.json configuration for Datasette."""
     metadata = {
         "title": "LLM Digest Database",
@@ -184,7 +185,7 @@ def create_datasette_metadata():
     return metadata
 
 
-def create_datasette_config():
+def create_datasette_config() -> None:
     """Create datasette configuration files."""
     metadata = create_datasette_metadata()
 

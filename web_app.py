@@ -6,7 +6,7 @@ Provides web interface for URL submission, OpenGraph extraction, and LLM summari
 
 import urllib.parse
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import uvicorn
 from fastapi import FastAPI, Form, HTTPException, Query, Request
@@ -45,7 +45,7 @@ app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 
 @app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+async def home(request: Request) -> Any:
     """Home page with URL submission form and recent entries."""
     recent_entries = db.get_recent_entries(limit=20)
     stats = db.get_stats()
@@ -63,7 +63,7 @@ async def submit_url(
     url: str = Form(...),
     model: str = Form("gpt-4"),
     format_type: str = Form("bullet")
-):
+) -> Any:
     """Submit URL for processing."""
     # Validate URL
     if not _is_valid_url(url):
@@ -93,6 +93,9 @@ async def submit_url(
         # Save to database
         url_id = db.insert_url(url_record)
 
+        if url_id is None:
+            raise HTTPException(status_code=500, detail="Failed to save URL to database")
+
         if summary_record:
             summary_record.url_id = url_id
             db.insert_summary(summary_record)
@@ -105,7 +108,7 @@ async def submit_url(
 
 
 @app.get("/results/{url_id}", response_class=HTMLResponse)
-async def view_results(request: Request, url_id: int):
+async def view_results(request: Request, url_id: int) -> Any:
     """View results for a specific URL."""
     url_record = db.get_url_by_id(url_id)
     if not url_record:
@@ -125,9 +128,9 @@ async def search(
     request: Request,
     q: Optional[str] = Query(None),
     type: str = Query("all")  # all, urls, summaries
-):
+) -> Any:
     """Search interface and results."""
-    results = []
+    results: list[dict[str, Any]] | dict[str, list[dict[str, Any]]] = []
 
     if q:
         if type == "urls":
@@ -151,31 +154,31 @@ async def search(
 
 
 @app.get("/api/stats")
-async def get_stats():
+async def get_stats() -> Any:
     """API endpoint for database statistics."""
     return db.get_stats()
 
 
 @app.get("/api/recent")
-async def get_recent(limit: int = Query(50, le=100)):
+async def get_recent(limit: int = Query(50, le=100)) -> Any:
     """API endpoint for recent entries."""
     return db.get_recent_entries(limit)
 
 
 @app.get("/api/search/urls")
-async def search_urls_api(q: str = Query(...), limit: int = Query(50, le=100)):
+async def search_urls_api(q: str = Query(...), limit: int = Query(50, le=100)) -> Any:
     """API endpoint for URL search."""
     return db.search_urls(q, limit)
 
 
 @app.get("/api/search/summaries")
-async def search_summaries_api(q: str = Query(...), limit: int = Query(50, le=100)):
+async def search_summaries_api(q: str = Query(...), limit: int = Query(50, le=100)) -> Any:
     """API endpoint for summary search."""
     return db.search_summaries(q, limit)
 
 
 @app.get("/api/models")
-async def get_models():
+async def get_models() -> Any:
     """API endpoint for available LLM models."""
     try:
         models = model_discovery.get_recommended_models()
@@ -204,7 +207,7 @@ async def get_models():
 
 
 @app.get("/api/models/categories")
-async def get_models_by_category():
+async def get_models_by_category() -> Any:
     """API endpoint for categorized LLM models."""
     try:
         categories = model_discovery.get_models_by_category()
@@ -241,7 +244,7 @@ async def get_models_by_category():
 
 
 @app.get("/datasette")
-async def datasette_redirect():
+async def datasette_redirect() -> Any:
     """Redirect to Datasette instance."""
     # This would redirect to a separately running Datasette instance
     return RedirectResponse(url="http://localhost:8001", status_code=302)
@@ -256,7 +259,7 @@ def _is_valid_url(url: str) -> bool:
         return False
 
 
-def main():
+def main() -> None:
     """Main entry point for the web application."""
     # Run the application
     uvicorn.run(

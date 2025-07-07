@@ -348,7 +348,7 @@ class URLSummarizer:
             print(f"❌ Unexpected error: {e}")
             return False
 
-    def run_interactive(self):
+    def run_interactive(self) -> None:
         """Run the interactive command-line interface."""
         print("🔗 Enhanced URL Summarizer v" + __version__)
         print("=" * 50)
@@ -398,7 +398,7 @@ class URLSummarizer:
             sys.exit(0)
 
 
-def create_config_from_args(args) -> SummaryConfig:
+def create_config_from_args(args: argparse.Namespace) -> SummaryConfig:
     """Create configuration from command line arguments."""
     return SummaryConfig(
         model=args.model,
@@ -409,7 +409,7 @@ def create_config_from_args(args) -> SummaryConfig:
     )
 
 
-def main():
+def main() -> None:
     """Main entry point with comprehensive argument parsing."""
     parser = argparse.ArgumentParser(
         description="Enhanced URL Summarizer using LLM fragments",
