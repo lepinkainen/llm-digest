@@ -16,7 +16,10 @@ from fastapi.templating import Jinja2Templates
 
 from config import settings
 from database import DatabaseManager
-from services import LLMModelDiscovery, SummaryConfig, URLProcessor
+from llm_discovery import LLMModelDiscovery
+from models import SummaryConfig
+from processors import URLProcessor
+from utils import validate_url
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -65,7 +68,7 @@ async def submit_url(
 ) -> Any:
     """Submit URL for processing."""
     # Validate URL
-    if not _is_valid_url(url):
+    if not validate_url(url):
         raise HTTPException(status_code=400, detail="Invalid URL format")
 
     # Check if URL already exists
@@ -296,13 +299,6 @@ async def datasette_redirect() -> Any:
     return RedirectResponse(url="http://localhost:8001", status_code=302)
 
 
-def _is_valid_url(url: str) -> bool:
-    """Validate URL format."""
-    try:
-        result = urllib.parse.urlparse(url)
-        return all([result.scheme, result.netloc])
-    except Exception:
-        return False
 
 
 def main() -> None:

@@ -89,10 +89,10 @@ all = [
 
 [project.scripts]
 # Multiple entry points for flexibility
-url-summarizer = "claude_llm:main"
-summarize-url = "claude_llm:main"
-llm-summarizer = "claude_llm:main"
-esum = "claude_llm:main"
+url-summarizer = "cli:main"
+summarize-url = "cli:main"
+llm-summarizer = "cli:main"
+esum = "cli:main"
 # Web application entry point
 llm-digest-web = "web_app:main"
 

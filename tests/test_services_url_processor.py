@@ -2,7 +2,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from services import SummaryRecord, URLProcessor, URLRecord
+from database import SummaryRecord, URLRecord
+from processors import URLProcessor
 
 
 @pytest.fixture

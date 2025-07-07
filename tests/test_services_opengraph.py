@@ -1,7 +1,8 @@
 import pytest
 import responses
 
-from services import OpenGraphExtractor, URLRecord
+from database import URLRecord
+from extractors import OpenGraphExtractor
 
 
 @pytest.fixture

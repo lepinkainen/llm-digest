@@ -3,7 +3,9 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from services import LLMSummaryService, SummaryConfig, SummaryRecord
+from database import SummaryRecord
+from models import SummaryConfig
+from summarizers import LLMSummaryService
 
 
 @pytest.fixture

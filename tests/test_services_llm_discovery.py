@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from services import LLMModelDiscovery
+from llm_discovery import LLMModelDiscovery
 
 
 @pytest.fixture
